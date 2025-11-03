@@ -222,15 +222,25 @@ class Firework {
 
     draw() {
         if (this.exploded) {
-            // FINAL FIX: Added check for complete and not broken image
-            if (this.logoImage && this.logoImage.complete && this.logoImage.naturalWidth !== 0) {
-                // FINAL FIX: Draw the logo image instead of particles
-                const logoSize = 100;
-                ctx.globalAlpha = 1 - (this.life / this.maxLife); // Fade out the logo
-                ctx.drawImage(this.logoImage, this.x - logoSize / 2, this.y - logoSize / 2, logoSize, logoSize);
-                ctx.globalAlpha = 1;
-                this.life += 1; // Manually increase life for fade out
-            } else if (!this.logoImage) {
+                // FINAL FIX: Draw the logo image in a circular pattern
+                if (this.logoImage && this.logoImage.complete && this.logoImage.naturalWidth !== 0) {
+                    const logoSize = 50; // Smaller size for the individual logos
+                    const radius = 50 * (this.life / this.maxLife); // Expanding radius
+                    const count = 12; // Number of logos in the circle
+                    
+                    ctx.globalAlpha = 1 - (this.life / this.maxLife); // Fade out the whole effect
+                    
+                    for (let i = 0; i < count; i++) {
+                        const angle = (i / count) * Math.PI * 2;
+                        const logoX = this.x + Math.cos(angle) * radius;
+                        const logoY = this.y + Math.sin(angle) * radius;
+                        
+                        ctx.drawImage(this.logoImage, logoX - logoSize / 2, logoY - logoSize / 2, logoSize, logoSize);
+                    }
+                    
+                    ctx.globalAlpha = 1;
+                    this.life += 1; // Manually increase life for fade out
+                } else if (!this.logoImage) {
                 this.particles.forEach(p => {
                     ctx.fillStyle = this.color;
                     ctx.globalAlpha = p.alpha;
@@ -306,12 +316,13 @@ function gameLoop(timestamp) {
 // FINAL FIX: Re-introducing water line drawing function with more lines and slower speed
 function drawWaterLines() {
     const waterLevel = height - WATER_LEVEL_OFFSET;
-    const waveHeight = 5;
-    const waveLength = 30; // Increased frequency (more lines)
-    const time = Date.now() * 0.001; // Slower speed (0.002 -> 0.001)
+    const waveHeight = 10; // FINAL FIX: Increased wave height for more visible waves
+    const waveLength = 50; // FINAL FIX: Increased wave length for smoother waves
+    const time = Date.now() * 0.0005; // FINAL FIX: Slower speed
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.lineWidth = 1;
+    // FINAL FIX: Darker, thicker lines for a more prominent water effect
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)'; 
+    ctx.lineWidth = 2; // FINAL FIX: Thicker lines
 
     for (let i = 0; i < 10; i++) { // FINAL FIX: Increased number of lines to 10
         ctx.beginPath();
