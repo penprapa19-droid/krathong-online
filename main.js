@@ -106,8 +106,8 @@ function resizeCanvas() {
         const roadPositionRatio = 0.18; 
         const roadY = imageBottom - (effectiveHeight * roadPositionRatio);
 
-        // FINAL FIX: Adjusting the vertical position of the tuktuk to run on the red line
-        tuktuk.y = roadY - tuktuk.height + 10; 
+        // FINAL FIX: Adjusting the vertical position of the tuktuk to run on the red line (Fine-tuned)
+        tuktuk.y = roadY - tuktuk.height + 5; 
     }
 
     // Recalculate krathong positions
@@ -151,17 +151,18 @@ class Krathong {
             // FINAL FIX: Draw wish text on the krathong with better styling
             if (this.wish) {
                 ctx.save();
-                ctx.fillStyle = '#000';
-                ctx.font = 'bold 14px Chonburi'; // Increased font size and bold
+                // FINAL FIX: Krathong wish text position and style
+                ctx.fillStyle = '#fff'; // White color
+                ctx.font = '16px "TH Sarabun New", sans-serif'; // 16px, TH Sarabun New (or fallback)
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+                ctx.textBaseline = 'bottom'; // Align to bottom for positioning above krathong
                 
                 // Truncate wish to fit on krathong
-                const maxLen = 10;
+                const maxLen = 15;
                 const displayWish = this.wish.length > maxLen ? this.wish.substring(0, maxLen) + '...' : this.wish;
 
-                // Position text slightly above the center of the krathong
-                ctx.fillText(displayWish, this.x + this.width / 2, this.y + this.height / 2 - 10);
+                // Position text above the krathong (approx. 15px above the top edge)
+                ctx.fillText(displayWish, this.x + this.width / 2, this.y - 15);
                 ctx.restore();
             }
         }
@@ -291,11 +292,12 @@ function gameLoop(timestamp) {
     fireworkTimer += deltaTime;
     if (fireworkTimer >= FIREWORK_INTERVAL) {
         fireworkTimer = 0;
-        // Map fixed positions to current screen size
-        const pos = FIXED_FIREWORK_POSITIONS[Math.floor(Math.random() * FIXED_FIREWORK_POSITIONS.length)];
-        const fireworkX = pos.x * (width / 1920);
-        const fireworkY = pos.y * (height / 1080);
-        fireworks.push(new Firework(fireworkX, fireworkY, true));
+        // FINAL FIX: Launch all 3 fixed fireworks simultaneously
+        FIXED_FIREWORK_POSITIONS.forEach(pos => {
+            const fireworkX = pos.x * (width / 1920);
+            const fireworkY = pos.y * (height / 1080);
+            fireworks.push(new Firework(fireworkX, fireworkY, true));
+        });
     }
 
     requestAnimationFrame(gameLoop);
@@ -311,7 +313,7 @@ function drawWaterLines() {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.lineWidth = 1;
 
-    for (let i = 0; i < 5; i++) { // Increased number of lines (3 -> 5)
+    for (let i = 0; i < 10; i++) { // FINAL FIX: Increased number of lines to 10
         ctx.beginPath();
         ctx.moveTo(0, waterLevel + i * 5);
         for (let x = 0; x < width; x++) {
