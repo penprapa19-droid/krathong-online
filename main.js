@@ -42,11 +42,14 @@ const krImgs  = ["kt1.png","kt2.png","kt3.png","kt4.png","kt5.png"].map(n=>makeI
 /* ===== Canvas Sizing & Anchors ===== */
 function size(){
   const h = header ? header.offsetHeight : 0;
-  // The original index.html had a fixed inset for #scene, we'll use a more standard approach
-  // where canvas height is innerHeight minus header height.
-  cvs.width  = innerWidth;
-  cvs.height = Math.max(1, (visualViewport?.height || innerHeight) - h);
-  // Also, update the background image size logic if it was in JS, but it's in CSS/HTML now.
+  // Set canvas CSS size to fill the remaining viewport
+  cvs.style.top = `${h}px`;
+  cvs.style.height = `calc(100% - ${h}px)`;
+  cvs.style.width = '100%';
+
+  // Set drawing buffer size to match CSS size
+  cvs.width  = cvs.offsetWidth;
+  cvs.height = cvs.offsetHeight;
 }
 addEventListener("resize", ()=>requestAnimationFrame(size));
 addEventListener("orientationchange", size);
@@ -316,8 +319,3 @@ function loop(ts){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-
-
-สด
-
-ข้ามไปยังสด
