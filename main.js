@@ -35,9 +35,9 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<"
 function haptic(){ if('vibrate' in navigator) try{ navigator.vibrate(12); }catch{} }
 
 /* ===== Assets Loading ===== */
-const tukImg  = makeImg("tuktuk.png");
-const logoImg = makeImg("logo.png");
-const krImgs  = ["kt1.png","kt2.png","kt3.png","kt4.png","kt5.png"].map(n=>makeImg(n));
+const tukImg  = makeImg("images/tuktuk.png");
+const logoImg = makeImg("images/logo.png");
+const krImgs  = ["kt1.png","kt2.png","kt3.png","kt4.png","kt5.png"].map(n=>makeImg("images/"+n));
 
 /* ===== Canvas Sizing & Anchors ===== */
 function size(){
@@ -316,3 +316,8 @@ function loop(ts){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
+
+สด
+
+ข้ามไปยังสด
