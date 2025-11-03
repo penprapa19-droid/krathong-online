@@ -106,8 +106,8 @@ function resizeCanvas() {
         const roadPositionRatio = 0.18; 
         const roadY = imageBottom - (effectiveHeight * roadPositionRatio);
 
-        // FINAL FIX: Adjusting the vertical position of the tuktuk to run on the red line (Fine-tuned)
-        tuktuk.y = roadY - tuktuk.height + 5; 
+        // FINAL FIX: Adjusting the vertical position of the tuktuk to run on the red line (Fine-tuned to match reference)
+        tuktuk.y = roadY - tuktuk.height + 10; // Adjusted from +5 to +10 for better visual alignment on the red line 
     }
 
     // Recalculate krathong positions
@@ -224,16 +224,17 @@ class Firework {
         if (this.exploded) {
                 // FINAL FIX: Draw the logo image in a circular pattern
                 if (this.logoImage && this.logoImage.complete && this.logoImage.naturalWidth !== 0) {
-                    const logoSize = 50; // Smaller size for the individual logos
-                    const radius = 50 * (this.life / this.maxLife); // Expanding radius
-                    const count = 12; // Number of logos in the circle
+                    const logoSize = 100; // Size of the logo
+                    const count = 20; // Number of logos to draw
+                    const spread = 10; // How much the logos spread out
                     
                     ctx.globalAlpha = 1 - (this.life / this.maxLife); // Fade out the whole effect
                     
                     for (let i = 0; i < count; i++) {
                         const angle = (i / count) * Math.PI * 2;
-                        const logoX = this.x + Math.cos(angle) * radius;
-                        const logoY = this.y + Math.sin(angle) * radius;
+                        // Calculate position with a slight spread and rotation
+                        const logoX = this.x + Math.cos(angle) * spread * (this.life / this.maxLife);
+                        const logoY = this.y + Math.sin(angle) * spread * (this.life / this.maxLife);
                         
                         ctx.drawImage(this.logoImage, logoX - logoSize / 2, logoY - logoSize / 2, logoSize, logoSize);
                     }
@@ -316,15 +317,15 @@ function gameLoop(timestamp) {
 // FINAL FIX: Re-introducing water line drawing function with more lines and slower speed
 function drawWaterLines() {
     const waterLevel = height - WATER_LEVEL_OFFSET;
-    const waveHeight = 10; // FINAL FIX: Increased wave height for more visible waves
-    const waveLength = 50; // FINAL FIX: Increased wave length for smoother waves
-    const time = Date.now() * 0.0005; // FINAL FIX: Slower speed
+    const waveHeight = 15; // FINAL FIX: Increased wave height for more visible waves (Visual match to reference)
+    const waveLength = 80; // FINAL FIX: Increased wave length for smoother waves (Visual match to reference)
+    const time = Date.now() * 0.0003; // FINAL FIX: Even Slower speed (Visual match to reference)
 
-    // FINAL FIX: Darker, thicker lines for a more prominent water effect
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)'; 
-    ctx.lineWidth = 2; // FINAL FIX: Thicker lines
+    // FINAL FIX: Darker, thicker lines for a more prominent water effect (Visual match to reference)
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)'; 
+    ctx.lineWidth = 3; // FINAL FIX: Thicker lines (Visual match to reference)
 
-    for (let i = 0; i < 10; i++) { // FINAL FIX: Increased number of lines to 10
+    for (let i = 0; i < 15; i++) { // FINAL FIX: Increased number of lines to 15 (Visual match to reference)
         ctx.beginPath();
         ctx.moveTo(0, waterLevel + i * 5);
         for (let x = 0; x < width; x++) {
