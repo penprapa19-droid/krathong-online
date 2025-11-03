@@ -58,7 +58,7 @@ const FIREWORK_INTERVAL = 5000;
 const assets = {
     tuktuk: 'images/tuktuk.png',
     song: 'audio/song.mp3',
-    fireworkLogo: 'images/no-smoking.png',
+    fireworkLogo: 'images/logo.png', // FIXED: Use logo.png instead
     krathongs: []
 };
 
@@ -223,7 +223,7 @@ class Firework {
         
         if (this.isFixed) {
             this.logoImage = new Image();
-            this.logoImage.src = 'images/logo.png';
+            this.logoImage.src = 'images/logo.png'; // FIXED: Use logo.png instead of no-smoking.png
         }
     }
 
