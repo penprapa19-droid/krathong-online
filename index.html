@@ -15,113 +15,67 @@
   .btn:active{padding:10px 10px; transform:translateY(1px)}
   .good{background:#104529; padding:10px 10px; border-color:#1b7d4e}
   .bad{background:#0b61d3; padding:10px 10px; border-color:#0e96ca}
-  /* Layers */
   #stage{position:fixed;inset:calc(0px) 0 0 0; z-index:0; display:grid; place-items:center; overflow:hidden}
-  #bgLayer{max-width:100%; max-height:100%; width:100%; height:100%; object-fit:contain; object-position:center center;}
-  #scene{position:fixed;inset:calc(0px) 0 0 0; z-index:1; width:100%; height:calc(100% - -20px); touch-action:manipulation}
-  /* Splash */
+  #bgLayer{max-width:100%; max-height:100%; width:100%; height:100%; object-fit:cover; object-position:center bottom;}
+  #scene{position:fixed;inset:0 0 0 0; z-index:1; width:100%; height:100%; touch-action:manipulation}
   #splash{position:fixed; inset:0; background:rgba(3,7,14,.85); display:grid; place-items:center; z-index:20}
   .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
   #splash.hide{opacity:0;pointer-events:none;transition:.35s}
-  input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX}
-  /* Wish list */
+  input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX; flex-grow:1;}
   #wishList{max-width:680px; font-size:1rem; list-style:none; padding-left:20px}
   #wishList .num{display:inline-block; min-width:64px; margin-right:.35rem; color:#9bd3ff}
-  /* Mobile bar */
   #mobileBar{position:fixed;left:0;right:0;bottom:0;display:none;gap:.6rem;justify-content:center;padding:.6rem;z-index:12;
              background:linear-gradient(180deg, rgba(6,16,24,0), rgba(6,16,24,.8));}
   #mobileBar .btn{padding:.7rem 1.1rem;border-radius:1rem} 
-  /* Toast */
   #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%); background:#0e1726; border:2px solid #1a2a45; border-radius:12px ;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
   #toast.show{opacity:.96}
 
-
+  /* CSS เพื่อซ่อนปุ่มใน Header บนมือถือ */
   @media (max-width:640px){
-    body{margin:0; height:100%; background:#061018; color:#ffffff;}
-    header{padding:20px 20px; position:fixed; z-index:10; inset:0 0 auto 0; background:linear-gradient(180deg, #061018 0%, #061827 100%)}
-    h1{font-size:22px; color: #ff0000 ;margin:0px 0px}
-    .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
-    #stage{position:fixed;inset:calc(0px) 0 0 0; z-index:0; display:grid; place-items:center; overflow:hidden}
-    #bgLayer{max-width:100%; max-height:100%; width:100%; height:100%; object-fit:contain; object-position:center center;}
-    #scene{position:fixed;inset:calc(0px) 0 0 0; z-index:1; width:100%; height:calc(100% - -20px); touch-action:manipulation}
-    #mobileBar{display:flex}
-    /* Splash */
-    #splash{position:fixed; inset:0; background:rgba(3,7,14,.85); display:grid; place-items:center; z-index:20}
-    .card{background:#0e1726; border:2px solid #1a2a45; border-radius:12px; padding:22px 24px; box-shadow:0 10px 40px rgba(0,0,0,.4); width:min(90vw,300px);text-align:center}
-    #splash.hide{opacity:0;pointer-events:none;transition:.35s}
-    input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX}
-    /* Wish list */
-    #wishList{max-width:680px; font-size:1rem; list-style:none; padding-left:20px}
-    #wishList .num{display:inline-block; min-width:64px; margin-right:.35rem; color:#9bd3ff}
+    header{padding:10px 10px;}
+    #scene{ top:100px; height:calc(100% - 100px); } /* Adjusted top for mobile header */
+    h1{font-size:20px; margin:0px 0px}
+    .row{gap:8px;}
+    .pill{padding:8px 8px;}
+    .btn{padding:8px 8px; font-size:14PX}
+    input[type="text"]{min-width:100%; font-size:14PX; margin-top:8px; flex-grow:1;}
+    
+    .card{width:min(90vw,300px);}
+    /* ซ่อน mobileBar บนมือถือ */
+    #mobileBar { display: none !important; }
   }
 </style>
-
-<link rel="icon" href="logo.png">
+<link rel="icon" href="images/logo.png">
 </head>
-
 <body>
 <header>
   <div class="row">
     <h1>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</h1>
   </div>
-  <div class="row" style="margin-top:30px">
+  <div class="row" style="margin-top:10px">
     <span class="pill">ลอยแล้ว <strong id="statCount">0</strong> ใบ</span>
-    <button id="playBtn" class="btn" style="display: none;">▶ เล่นเพลง</button>
-    <button id="stopBtn" class="btn" style="display: none;">⏸ หยุด</button>
-    <button id="tapMusic" class="btn">▶/⏸ เพลง</button>
+    <button id="headerMusicBtn" class="btn">▶/⏸ เพลง</button>
+    <button id="resetBtn" class="btn bad">🧹 เริ่มนับใหม่</button>
+    <button id="exportBtn" class="btn bad">⬇️ รายงาน CSV</button>
   </div>
   <div class="row" style="margin-top:10px">
-    <button id="resetBtn" class="btn bad" style="display: none;">🧹 เริ่มนับใหม่</button>
-    <button id="exportBtn" class="btn bad" style="display: none;">⬇️ รายงาน CSV</button>
-    <input id="wish" class="btn good" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ… แล้วกด >">
-    <button id="launch" class="btn good">ปล่อย</button>
+    <input id="wish" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ…" style="flex-grow:1;">
+    <button id="headerLaunchBtn" class="btn good">ปล่อย</button>
   </div>
-
-<!-- Default Statcounter code for ลอยกระทง -->
 </header>
-
 <div id="stage">
     <picture>
-      <source media="(max-width:640px)" srcset="bg5mb.png">
-    <!-- จอเล็กมาก -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-     <!-- จอกลุ่ม ~425px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~425px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~320px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~430px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~412px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~430px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~430px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~430px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~430px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~430px -->   
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~430px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-    <!-- จอกลุ่ม ~430px -->
-    <!-- FINAL FIX: Removing unnecessary image sources that complicate the logic -->
-
-
-     <img id="bgLayer" src="bg5.png" alt="background" style="width:auto;">
+      <source media="(max-width:640px)" srcset="images/bg5mb.png">
+      <img id="bgLayer" src="images/bg5.png" alt="background" style="width:auto;">
     </picture>
 </div>
 <canvas id="scene"></canvas>
 <div id="toast">ปล่อยแล้ว 🎋</div>
 <div id="mobileBar">
-  <button id="tapLaunch" class="btn good" style="display: none;">ปล่อยกระทง</button>
-  <button id="tapMusic" class="btn" style="display: none;">▶/⏸ เพลง</button>
+  <button id="tapLaunchMobile" class="btn good">ปล่อยกระทง</button>
+  <button id="tapMusicMobile" class="btn">▶/⏸ เพลง</button>
 </div>
-<audio id="bgm" loop preload="auto" src="song.mp3" playsinline></audio>
-
+<audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
 <div id="splash">
   <div class="card">
     <h1 style="margin:4px 0 0 0">แตะหน้าจอเพื่อเริ่มลอยกระทง</h1>
@@ -129,253 +83,9 @@
     <button id="startBtn" class="btn good">เริ่มลอยกระทง</button>
   </div>
 </div>
-
 <section style="position:fixed; left:10px; bottom:10px; right:10px; z-index:9; color:#bbccdd; pointer-events:none;">
   <ul id="wishList"></ul>
 </section>
-
-<script src="main.js?v=20231104_03"></script>
-<script>
-// Files
-const KRATHONG_SRCS=["kt1.png","kt2.png","kt3.png","kt4.png","kt5.png"];
-const TUK_SRC="tuktuk.png";
-const LOGO_SRC="logo.png";
-
-// Params
-const WATER_PCT=80, DIP_PX=60, WAVES=10, WAVE_AMP=6, WAVE_GAP=16;
-const ROAD_FROM_BOTTOM=185;
-const TUK={w:140,h:90,speed:40};
-
-const bgEl=document.getElementById('bgLayer');
-const canvas=document.getElementById('scene'), ctx=canvas.getContext('2d');
-function size(){ const h=document.querySelector('header').offsetHeight; canvas.width=innerWidth; canvas.height=innerHeight-h; }
-addEventListener('resize', size); size();
-const waterY=()=> canvas.height*(WATER_PCT/100);
-
-// Loaders
-function loadImage(src){ return new Promise((res)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); }
-let tukImg=null, logoImg=null, krathongs=[], readyCount=0;
-const totalToLoad=1+1+KRATHONG_SRCS.length;
-function markReady(){ readyCount++; document.getElementById('loadInfo').textContent = `โหลดแล้ว ${readyCount}/${totalToLoad}`; }
-(async()=>{
-  tukImg = await loadImage(TUK_SRC); markReady();
-  logoImg = await loadImage(LOGO_SRC); markReady();
-  for(const s of KRATHONG_SRCS){ krathongs.push(await loadImage(s)); markReady(); }
-})();
-
-// Audio
-const bgm=document.getElementById('bgm');
-function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
-document.getElementById('playBtn').onclick = safePlay;
-document.getElementById('tapMusic').onclick = ()=>{ if(bgm.paused) safePlay(); else bgm.pause(); };
-document.getElementById('stopBtn').onclick = ()=>{ try{ bgm.pause(); }catch{} };
-
-const splash=document.getElementById('splash');
-function hideSplash(){ if(!splash) return; splash.classList.add('hide'); setTimeout(()=>splash.remove?.(),350); }
-document.getElementById('startBtn').onclick = ()=>{ hideSplash(); safePlay(); };
-setTimeout(hideSplash, 1800);
-
-// Wish list / counters / logging for report
-const LS_COUNT="loy.count", LS_WISHES="loy.wishes.queue", LS_SEQ="loy.seq", LS_LOG="loy.wishes.log";
-let total=+(localStorage.getItem(LS_COUNT)||0), seq=+(localStorage.getItem(LS_SEQ)||0);
-document.getElementById('statCount').textContent=total;
-function bump(){ total++; localStorage.setItem(LS_COUNT,total); document.getElementById('statCount').textContent=total; }
-function pushWish(text){ 
-  let arr=[]; try{ arr=JSON.parse(localStorage.getItem(LS_WISHES)||"[]"); }catch{}; 
-  seq++; localStorage.setItem(LS_SEQ, seq); 
-  const item={n:seq,w:text||"",t:Date.now()};
-  arr.push(item); localStorage.setItem(LS_WISHES, JSON.stringify(arr)); 
-
-// log สำหรับ report
-  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{};
-  log.push(item); localStorage.setItem(LS_LOG, JSON.stringify(log));
-  renderWish(); 
-}
-function renderWish(){ const ul=document.getElementById('wishList'); let arr=[]; try{ arr=JSON.parse(localStorage.getItem(LS_WISHES)||"[]"); }catch{}; const view=arr.slice(-6); ul.innerHTML=view.map(x=>`<li><span class="num">คนที่ ${x.n}</span>🕯️ ${escapeHtml(x.w)}</li>`).join(""); }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));}
-renderWish();
-
-// Export CSV
-document.getElementById('exportBtn').onclick=()=>{
-  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{}
-  const rows=[["seq","timestamp","ISO","wish"]];
-  for(const x of log){ const iso=new Date(x.t||Date.now()).toISOString(); rows.push([x.n, x.t, iso, (x.w||"").replace(/"/g,'""')]); }
-  const csv=rows.map(r=>r.map(v=>`"${String(v)}"`).join(",")).join("\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download="loykrathong_report.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
-};
-
-// Reset
-document.getElementById('resetBtn').onclick=()=>{
-  if(confirm("ยืนยันเริ่มนับใหม่และลบคำอธิษฐานทั้งหมด?")){
-    localStorage.removeItem(LS_COUNT);
-    localStorage.removeItem(LS_WISHES);
-    localStorage.removeItem(LS_SEQ);
-    localStorage.removeItem(LS_LOG);
-    location.reload();
-  }
-};
-
-// Main loop
-let lastTime=0, tukX=0, fireworkTimer=0;
-const KRATHONG_SPEED=1.5, FIREWORK_INTERVAL=5000;
-const krathongList=[];
-
-function loop(time){
-  const delta=time-lastTime; lastTime=time;
-  if(delta>100) return requestAnimationFrame(loop); // Skip large delta (e.g., tab switch)
-
-  // Clear canvas
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Calculate positions based on background image containment
-  const bgWidth = 1920;
-  const bgHeight = 1080;
-  const bgAspectRatio = bgWidth / bgHeight;
-  const headerHeight = document.querySelector('header').offsetHeight;
-  
-  let effectiveWidth, effectiveHeight, xOffset, yOffset;
-
-  if (canvas.width / canvas.height > bgAspectRatio) {
-      // Screen is wider than image aspect ratio (black bars on left/right)
-      effectiveHeight = canvas.height;
-      effectiveWidth = canvas.height * bgAspectRatio;
-      xOffset = (canvas.width - effectiveWidth) / 2;
-      yOffset = 0;
-  } else {
-      // Screen is taller than image aspect ratio (black bars on top/bottom)
-      effectiveWidth = canvas.width;
-      effectiveHeight = canvas.width / bgAspectRatio;
-      xOffset = 0;
-      yOffset = (canvas.height - effectiveHeight) / 2;
-  }
-  
-  // FINAL FIX: Adjusting the canvas Y-offset to account for the fixed header
-  // The canvas height is innerHeight - headerHeight, but the background image is centered in the whole viewport.
-  // We need to calculate the actual Y-offset of the background image relative to the canvas top (which is headerHeight from viewport top)
-  const viewportHeight = innerHeight;
-  let bgYOffsetInViewport;
-  if (viewportHeight / innerWidth > bgAspectRatio) {
-      // Screen is wider (black bars on left/right)
-      bgYOffsetInViewport = (viewportHeight - effectiveHeight) / 2;
-  } else {
-      // Screen is taller (black bars on top/bottom)
-      bgYOffsetInViewport = (viewportHeight - effectiveHeight) / 2;
-  }
-  
-  // The Y-offset relative to the canvas top
-  const canvasYOffset = bgYOffsetInViewport - headerHeight;
-
-  // The red line is at 82% of the image height from the top (18% from the bottom)
-  const roadPositionRatio = 0.82; 
-  const roadYInImage = bgHeight * roadPositionRatio;
-  
-  // Convert image coordinate to screen coordinate (relative to canvas)
-  const scaleFactor = effectiveHeight / bgHeight;
-  const roadYScreen = canvasYOffset + (roadYInImage * scaleFactor);
-
-  // TukTuk
-  if(tukImg){
-    tukX = (tukX + TUK.speed * delta / 1000) % (canvas.width + TUK.w);
-    if(tukX > canvas.width) tukX = -TUK.w;
-    
-    // FINAL FIX: Use the calculated roadYScreen for tuktuk position
-    const tukY = roadYScreen - TUK.h + 10; // +10 for fine-tuning the alignment
-    ctx.drawImage(tukImg, tukX - TUK.w, tukY, TUK.w, TUK.h);
-  }
-
-  // Water level (90% of the image height from the top)
-  const waterPositionRatio = 0.90;
-  const waterYInImage = bgHeight * waterPositionRatio;
-  const waterYScreen = canvasYOffset + (waterYInImage * scaleFactor);
-  
-  // Update global water level for krathongs
-  waterY = waterYScreen;
-
-  // Krathongs
-  for(const k of krathongList){
-    k.x = (k.x + KRATHONG_SPEED * delta / 1000) % (canvas.width + k.w);
-    if(k.x > canvas.width) k.x = -k.w;
-    
-    // FINAL FIX: Use the calculated waterYScreen for krathong position
-    k.y = waterYScreen + Math.sin(k.x/WAVE_GAP + time/200) * WAVE_AMP;
-    ctx.drawImage(k.img, k.x, k.y - k.h/2, k.w, k.h);
-    
-    // Draw wish text
-    if(k.w){
-      ctx.fillStyle='#fff'; ctx.font='16px "TH Sarabun New", sans-serif'; ctx.textAlign='center';
-      ctx.fillText(k.w, k.x+k.w/2, k.y-k.h/2-10);
-    }
-  }
-
-  // Waves
-  ctx.strokeStyle='#000'; ctx.lineWidth=2;
-  for(let i=0; i<WAVES; i++){
-    ctx.beginPath();
-    ctx.moveTo(0, waterYScreen + i*WAVE_GAP);
-    for(let x=0; x<canvas.width; x++){
-      const y=waterYScreen + i*WAVE_GAP + Math.sin(x/WAVE_GAP + time/200) * WAVE_AMP;
-      ctx.lineTo(x,y);
-    }
-    ctx.stroke();
-  }
-
-  // Fireworks
-  fireworkTimer += delta;
-  if(fireworkTimer > FIREWORK_INTERVAL){
-    fireworkTimer = 0;
-    // Launch 3 fixed fireworks (assuming logo.png is the no-smoking logo)
-    const fixedPositions = [
-      { x: 0.2 * bgWidth, y: 0.2 * bgHeight }, // Left
-      { x: 0.5 * bgWidth, y: 0.1 * bgHeight }, // Center
-      { x: 0.8 * bgWidth, y: 0.2 * bgHeight }  // Right
-    ];
-    
-    for(const pos of fixedPositions){
-      // Convert fixed image coordinates to canvas coordinates
-      const fireworkX = xOffset + (pos.x * scaleFactor);
-      const fireworkY = canvasYOffset + (pos.y * scaleFactor);
-      // Logic to launch firework at fireworkX, fireworkY
-      // This part is missing in the provided code, so we'll skip it for now.
-    }
-  }
-
-  requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-
-// Krathong logic
-document.getElementById('launch').onclick=()=>{
-  const wishInput=document.getElementById('wish');
-  const wishText=wishInput.value.trim();
-  if(!wishText) return alert("กรุณาพิมพ์คำอธิษฐานก่อนปล่อยกระทง");
-  
-  bump(); pushWish(wishText); wishInput.value='';
-  
-  // Find an available krathong slot
-  let k=krathongList.find(k=>!k.w);
-  if(!k){
-    // If all are launched, replace the oldest one (first in the list)
-    k=krathongList.shift();
-    krathongList.push(k);
-  }
-  
-  k.w=wishText;
-  k.x=-k.w; // Start off-screen
-};
-
-// Initial krathong setup
-for(let i=0; i<KRATHONG_SRCS.length; i++){
-  krathongList.push({
-    img: krathongs[i],
-    w: TUK.w, h: TUK.h, // Using TUK size as a placeholder, adjust if needed
-    x: -TUK.w - i*200, // Staggered start
-    y: 0, // Will be set in loop
-    w: '' // Wish text
-  });
-}
-
-</script>
+<script src="main.js?v=20231104_final"></script>
 </body>
 </html>
