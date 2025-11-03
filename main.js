@@ -192,7 +192,7 @@ document.getElementById('launch').onclick=()=>{
 };
 
 // Mobile tap launch (if element exists)
-document.getElementById('tapLaunch')?.onclick=()=>{
+document.getElementById('tapLaunch').onclick=()=>{
   launch("");
   showToast();
   haptic();
