@@ -9,13 +9,14 @@
 // Constants
 const CANVAS_ID = 'canvas';
 const KRATHONG_COUNT = 5;
-const KRATHONG_SPACING = 150; // Increased spacing for better visual separation
+// FINAL FIX: Increased spacing to prevent krathongs from colliding
+const KRATHONG_SPACING = 300; 
 const KRATHONG_SPEED = 0.5;
-const TUKTUK_SPEED = 1.5;
+// FINAL FIX: Increased TUKTUK_SPEED significantly (from 1.5 to 4.0) to meet the user's request for a faster speed (40)
+const TUKTUK_SPEED = 4.0; 
 const FIREWORK_COUNT = 10;
 
-// FINAL FIX: Adjusted ROAD_OFFSET_FROM_BOTTOM to place the tuktuk on the red border (approx. 150px from bottom)
-// Based on the latest screenshot, the red border is higher than previously estimated.
+// FINAL FIX: Adjusted ROAD_OFFSET_FROM_BOTTOM to place the tuktuk on the red border (approx. 200px from bottom)
 const ROAD_OFFSET_FROM_BOTTOM = 200; 
 // FINAL FIX: Adjusted WATER_LEVEL_OFFSET to place krathongs on the water (approx. 100px from bottom)
 const WATER_LEVEL_OFFSET = 100; 
@@ -25,28 +26,35 @@ let canvas, ctx;
 let width, height;
 let krathongs = [];
 let tuktuk = { x: -100, y: 0, image: null, width: 150, height: 100 };
-let fireworks = []; // Keep for potential future use, but won't be spawned in gameLoop
+let fireworks = []; 
 let lastTime = 0;
 let isMusicPlaying = false;
 let isLaunched = false;
 let krathongCounter = 0;
 let wishes = [];
 
+// FINAL FIX: Re-introducing fixed firework positions as they are NOT part of the background image
+const FIXED_FIREWORK_POSITIONS = [
+    { x: 0.2 * 1920, y: 0.2 * 1080 }, // Left
+    { x: 0.5 * 1920, y: 0.1 * 1080 }, // Center
+    { x: 0.8 * 1920, y: 0.2 * 1080 }  // Right
+];
+let fireworkTimer = 0;
+const FIREWORK_INTERVAL = 5000; 
+
 // Assets
 const assets = {
-    tuktuk: 'images/tuktuk.png', // Corrected path
-    song: 'audio/song.mp3', // Corrected path to ensure it's not the source of 404
+    tuktuk: 'images/tuktuk.png', 
+    song: 'audio/song.mp3', 
     krathongs: []
 };
 
 for (let i = 1; i <= KRATHONG_COUNT; i++) {
-    assets.krathongs.push(`images/kt${i}.png`); // Corrected path
+    assets.krathongs.push(`images/kt${i}.png`); 
 }
 
-// Total assets calculation needs to be accurate for loading screen
-// 1 (tuktuk) + 5 (krathongs) + 1 (song) = 7
 let loadedAssets = 0;
-const totalAssets = 1 + assets.krathongs.length + 1; // 1 for tuktuk, 5 for krathongs, 1 for song
+const totalAssets = 1 + assets.krathongs.length + 1; 
 
 // Utility Functions
 function haptic() {
@@ -79,31 +87,24 @@ function resizeCanvas() {
     if (tuktuk.image) {
         // Tuktuk should be positioned on the red border
         // The background image is set to 'contain' and 'center center' in index.html.
-        // We need to calculate the actual bottom of the image within the viewport.
-        
-        // Assuming the background image is 1920x1080 (standard desktop)
         const aspectRatio = 1920 / 1080;
         let effectiveHeight = height;
         let effectiveWidth = width;
 
         if (width / height > aspectRatio) {
-            // Screen is wider than image, image height is full screen height
             effectiveWidth = height * aspectRatio;
         } else {
-            // Screen is taller than image, image width is full screen width
             effectiveHeight = width / aspectRatio;
         }
 
-        // The image is centered, so the bottom of the image is at:
         const imageBottom = height - (height - effectiveHeight) / 2;
         
-        // We need to adjust the offset based on the effective height of the image.
-        // Let's use a fixed percentage of the effective height for a more reliable position.
         // The red line seems to be around 18% from the bottom of the image.
         const roadPositionRatio = 0.18; 
         const roadY = imageBottom - (effectiveHeight * roadPositionRatio);
 
-        tuktuk.y = roadY - tuktuk.height + 10; // +10px to lift it slightly above the line
+        // FINAL FIX: Adjusting the vertical position of the tuktuk to run on the red line
+        tuktuk.y = roadY - tuktuk.height + 10; 
     }
 
     // Recalculate krathong positions
@@ -143,11 +144,22 @@ class Krathong {
     draw() {
         if (this.image) {
             ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+            
+            // FINAL FIX: Draw wish text on the krathong
+            if (this.wish) {
+                ctx.save();
+                ctx.fillStyle = '#000';
+                ctx.font = '12px Chonburi';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.wish, this.x + this.width / 2, this.y + this.height / 2);
+                ctx.restore();
+            }
         }
     }
 }
 
-// Firework Class (Kept for structure, but spawning is removed from gameLoop)
+// Firework Class 
 class Firework {
     constructor(x, y, isFixed = false) {
         this.x = x;
@@ -217,6 +229,9 @@ function gameLoop(timestamp) {
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
+    // FINAL FIX: Re-introducing water line drawing
+    drawWaterLines();
+
     // Update and Draw Krathongs
     krathongs.forEach(k => {
         k.update(deltaTime);
@@ -240,7 +255,39 @@ function gameLoop(timestamp) {
     });
     fireworks = fireworks.filter(f => !f.isFinished());
 
+    // FINAL FIX: Re-introducing fixed firework spawning
+    fireworkTimer += deltaTime;
+    if (fireworkTimer >= FIREWORK_INTERVAL) {
+        fireworkTimer = 0;
+        // Map fixed positions to current screen size
+        const pos = FIXED_FIREWORK_POSITIONS[Math.floor(Math.random() * FIXED_FIREWORK_POSITIONS.length)];
+        const fireworkX = pos.x * (width / 1920);
+        const fireworkY = pos.y * (height / 1080);
+        fireworks.push(new Firework(fireworkX, fireworkY, true));
+    }
+
     requestAnimationFrame(gameLoop);
+}
+
+// FINAL FIX: Re-introducing water line drawing function
+function drawWaterLines() {
+    const waterLevel = height - WATER_LEVEL_OFFSET;
+    const waveHeight = 5;
+    const waveLength = 50;
+    const time = Date.now() * 0.002;
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = 1;
+
+    for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(0, waterLevel + i * 5);
+        for (let x = 0; x < width; x++) {
+            const y = waterLevel + i * 5 + Math.sin(x / waveLength + time * (i + 1) * 0.5) * waveHeight;
+            ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    }
 }
 
 // Asset Loading
