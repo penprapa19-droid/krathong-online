@@ -122,7 +122,7 @@ class Krathong{
   }
   update(dt){
     this.x+=this.vx*dt;
-    if(this.x>cvs.width+160) this.x=-160 - rnd(0,400); // Further increased random offset for better spacing
+    if(this.x>cvs.width+160) this.x=-160 - rnd(0,600); // Significantly increased random offset for better spacing
     this.t+=dt;
     this.y=this.computeY(this.t);
   }
@@ -270,7 +270,7 @@ setInterval(spawnTriple,10000); // Recurring bursts
 // Since we set object-fit: cover and object-position: center bottom,
 // the bottom of the image aligns with the bottom of the stage.
 // We will use a fixed offset from the bottom of the canvas for the road.
-const ROAD_OFFSET_FROM_BOTTOM = 450; // Adjusted to 450 to ensure tuk-tuk is definitely on the red line (based on user feedback)
+const ROAD_OFFSET_FROM_BOTTOM = 452; // Adjusted to 452 to ensure tuk-tuk is definitely on the red line (based on user feedback)
 
 function roadYFromBackground(){
   // Calculate the road Y position relative to the canvas bottom
