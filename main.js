@@ -1,327 +1,433 @@
 /*
- * Loy Krathong Online - Main JavaScript Logic
+ * Loy Krathong Interactive Web Application - main.js
  *
- * This file consolidates and refines the JavaScript logic from the original index.html and main.js.
- * The goal is to ensure all features (Responsive, Krathong, Fireworks, Tuk-Tuk, Music, Stats) work correctly.
+ * This file contains all the game logic, animation, and event handlers.
+ * All DOM manipulation and event listeners are wrapped in a DOMContentLoaded
+ * listener to prevent "Cannot set properties of null" errors due to race conditions.
  */
 
-/* ===== Configuration & Constants ===== */
-const VQS = "?v=12.4"; // Version Query String for cache busting
-const WATER_FACTOR = 0.75;   // Adjusted to 0.75 to raise the water level further, preventing krathongs from sinking too much
-const ROAD_DY      = 0;      // Road position relative to water surface (0 means road is at water level)
-const LANES        = 5;      // Number of krathong lanes
-const LANE_STEP    = 16;     // Vertical distance between lanes
-const KR_SIZE      = 90;     // Krathong size (increased from 60 to 90 for better visibility)
-const MAX_BOATS    = 24;     // Maximum number of krathongs on screen
-const TUK_W        = 140;    // Tuk-Tuk width
-const TUK_H        = 90;     // Tuk-Tuk height
-const TUK_SPEED    = 35;     // Tuk-Tuk speed
+// Constants
+const CANVAS_ID = 'canvas';
+const KRATHONG_COUNT = 5;
+const KRATHONG_SPACING = 150; // Increased spacing for better visual separation
+const KRATHONG_SPEED = 0.5;
+const TUKTUK_SPEED = 1.5;
+const FIREWORK_COUNT = 10;
+const ROAD_OFFSET_FROM_BOTTOM = 450; // Adjusted for better positioning on the road
+const WATER_FACTOR = 0.1; // Controls how much krathongs sink into the water
 
-/* ===== DOM Elements ===== */
-const cvs = document.getElementById("scene");
-const ctx = cvs.getContext("2d");
-const header = document.querySelector("header");
-const wishEl = document.getElementById("wish");
-const statEl = document.getElementById("statCount");
-const toast  = document.getElementById("toast");
-const bgm    = document.getElementById("bgm");
-const wishListEl = document.getElementById("wishList");
+// Global Variables
+let canvas, ctx;
+let width, height;
+let krathongs = [];
+let tuktuk = { x: -100, y: 0, image: null, width: 150, height: 100 };
+let fireworks = [];
+let lastTime = 0;
+let isMusicPlaying = false;
+let isLaunched = false;
+let krathongCounter = 0;
+let wishes = [];
 
-/* ===== Utility Functions ===== */
-const rnd = (a,b)=>Math.random()*(b-a)+a;
-function makeImg(p){ const i=new Image(); i.crossOrigin="anonymous"; i.decoding="async"; i.onload=()=>i._ok=true; i.src=p+VQS; return i; }
-function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));}
-function haptic(){ if('vibrate' in navigator) try{ navigator.vibrate(12); }catch{} }
-
-/* ===== Assets Loading ===== */
-const tukImg  = makeImg("images/tuktuk.png");
-const logoImg = makeImg("images/logo.png");
-const krImgs  = ["kt1.png","kt2.png","kt3.png","kt4.png","kt5.png"].map(n=>makeImg("images/"+n));
-
-/* ===== Canvas Sizing & Anchors ===== */
-function size(){
-  const h = header ? header.offsetHeight : 0;
-  // Set canvas CSS size to fill the remaining viewport
-  cvs.style.top = `${h}px`;
-  cvs.style.height = `calc(100% - ${h}px)`;
-  cvs.style.width = '100%';
-
-  // Set drawing buffer size to match CSS size
-  cvs.width  = cvs.offsetWidth;
-  cvs.height = cvs.offsetHeight;
-}
-addEventListener("resize", ()=>requestAnimationFrame(size));
-addEventListener("orientationchange", size);
-size();
-
-const waterY = () => Math.round(cvs.height * WATER_FACTOR);
-const roadY  = () => waterY() + ROAD_DY;
-function laneY(i){ return waterY() + 10 + i*LANE_STEP; }
-
-/* ===== Statistics (localStorage) ===== */
-const LS_COUNT="loy.count", LS_WQ="loy.wishes.queue", LS_SEQ="loy.seq", LS_LOG="loy.wishes.log";
-let total=+(localStorage.getItem(LS_COUNT)||0), seq=+(localStorage.getItem(LS_SEQ)||0);
-statEl.textContent = total;
-
-function bump(){ total++; localStorage.setItem(LS_COUNT,total); statEl.textContent = total; }
-function pushWish(t){
-  let a=[]; try{ a=JSON.parse(localStorage.getItem(LS_WQ)||"[]"); }catch{}
-  seq++; localStorage.setItem(LS_SEQ,seq);
-  const item={n:seq,w:(t||"").trim(),t:Date.now()};
-  a.push(item); localStorage.setItem(LS_WQ,JSON.stringify(a));
-  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{}
-  log.push(item); localStorage.setItem(LS_LOG,JSON.stringify(log));
-  renderWish();
-}
-
-function renderWish(){
-  let a=[]; try{ a=JSON.parse(localStorage.getItem(LS_WQ)||"[]"); }catch{}
-  const view=a.slice(-6); // Show last 6 wishes
-  wishListEl.innerHTML = view.map(x=>`<li><span class="num">คนที่ ${x.n}</span>🕯️ ${escapeHtml(x.w)}</li>`).join("");
-}
-renderWish();
-
-// Reset Button Logic
-document.getElementById('resetBtn').onclick=()=>{
-  if(confirm("ยืนยันเริ่มนับใหม่และลบคำอธิษฐานทั้งหมด?")){
-    localStorage.removeItem(LS_COUNT);
-    localStorage.removeItem(LS_WQ);
-    localStorage.removeItem(LS_SEQ);
-    localStorage.removeItem(LS_LOG);
-    total=0; seq=0; statEl.textContent=0;
-    boats.length=0; renderWish();
-  }
+// Assets
+const assets = {
+    tuktuk: 'tuktuk.png',
+    song: 'song.mp3',
+    krathongs: []
 };
 
-// Export CSV Logic
-document.getElementById('exportBtn').onclick=()=>{
-  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{}
-  const rows=[["seq","timestamp","ISO","wish"]];
-  for(const x of log){ const iso=new Date(x.t||Date.now()).toISOString(); rows.push([x.n, x.t, iso, (x.w||"").replace(/"/g,'""')]); }
-  const csv=rows.map(r=>r.map(v=>`"${String(v)}"`).join(",")).join("\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download="loykrathong_report.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
-};
+for (let i = 1; i <= KRATHONG_COUNT; i++) {
+    assets.krathongs.push(`kt${i}.png`);
+}
 
-/* ===== Krathong Class & Logic ===== */
-let nextKrathongIndex=0;
-class Krathong{
-  constructor(img, text){
-    this.img=img; this.text=text||"";
-    this.size=KR_SIZE;
-    this.lane=nextKrathongIndex % LANES; // Assign a lane
-    this.x=-120; this.vx=rnd(16,22); // Slightly slower speed for better spacing
-    this.phase=rnd(0,Math.PI*2); this.amp=2.2; this.freq=.9+rnd(0,.5); this.t=0;
-    this.y=this.computeY(0);
-  }
-  computeY(t){
-    const bob=Math.sin(t*this.freq+this.phase)*this.amp;
-    return laneY(this.lane) + bob;
-  }
-  update(dt){
-    this.x+=this.vx*dt;
-    if(this.x>cvs.width+160) this.x=-160 - rnd(0,600); // Significantly increased random offset for better spacing
-    this.t+=dt;
-    this.y=this.computeY(this.t);
-  }
-  draw(g){
-    const wy=waterY(), rx=this.size*.55, ry=6;
-    // Shadow
-    const grd=g.createRadialGradient(this.x,wy,1,this.x,wy,rx);
-    grd.addColorStop(0,'rgba(0,0,0,.22)'); grd.addColorStop(1,'rgba(0,0,0,0)');
-    g.fillStyle=grd; g.beginPath(); g.ellipse(this.x,wy,rx,ry,0,0,Math.PI*2); g.fill();
+let loadedAssets = 0;
+const totalAssets = Object.keys(assets).length - 1 + assets.krathongs.length; // -1 for krathongs array, + krathongs.length
 
-    // Krathong Image
-    if(this.img && this.img._ok){ g.drawImage(this.img,this.x-this.size/2,this.y-this.size/2,this.size,this.size); }
-    else { g.fillStyle='#27ae60'; g.beginPath(); g.arc(this.x,this.y,this.size/2,0,Math.PI*2); g.fill(); }
-
-    // Wish text
-    if(this.text){
-      const msg = this.text;
-      g.font="600 15px system-ui, -apple-system, 'TH Sarabun New', Prompt, sans-serif";
-      g.textAlign="center"; g.textBaseline="middle";
-      const padX=12, padY=6;
-      const w = Math.min(320, g.measureText(msg).width + padX*2);
-      const h = 26;
-      const cy=this.y - this.size*0.75;
-      const cx=this.x;
-
-      // pill background
-      g.save();
-      g.globalAlpha=.85; g.fillStyle="#0e1726"; roundRect(g, cx - w/2, cy - h/2, w, h, 14); g.fill();
-      g.globalAlpha=1; g.strokeStyle="rgba(255,255,255,.25)"; g.lineWidth=1; roundRect(g, cx - w/2, cy - h/2, w, h, 14); g.stroke();
-      // text
-      g.fillStyle="#e9f0ff"; g.fillText(msg, cx, cy);
-      g.restore();
+// Utility Functions
+function haptic() {
+    if (window.navigator.vibrate) {
+        window.navigator.vibrate(50);
     }
-  }
 }
 
-const boats=[];
-// Initialize with 5 krathongs
-for(let i=0; i<LANES; i++){
-  const im=krImgs[i % krImgs.length];
-  boats.push(new Krathong(im, ""));
-  boats[i].x = -180 - i*200; // Increased initial stagger for better spacing
-  nextKrathongIndex++;
-}
-
-function launch(text){
-  const imgs=krImgs.filter(Boolean);
-  let im=null;
-  if(imgs.length){ im=imgs[nextKrathongIndex % imgs.length]; nextKrathongIndex=(nextKrathongIndex+1)%imgs.length; }
-
-  // Remove the oldest krathong if max limit is reached
-  if(boats.length>=MAX_BOATS){ boats.shift(); }
-
-  boats.push(new Krathong(im, text));
-  bump(); pushWish(text);
-}
-
-/* ===== Launch & Input Handlers ===== */
-function showToast(){ toast?.classList.add("show"); setTimeout(()=>toast?.classList.remove("show"),700); }
-
-// Launch button
-document.getElementById('launch').onclick=()=>{
-  launch(wishEl.value||"");
-  wishEl.value="";
-  showToast();
-  haptic();
-};
-
-// Mobile tap launch (if element exists)
-const tapLaunchMobile = document.getElementById('tapLaunchMobile'); if(tapLaunchMobile) tapLaunchMobile.onclick=()=>{
-  launch("");
-  showToast();
-  haptic();
-};
-
-// Canvas click/tap launch
-cvs.addEventListener('click', ()=>{ launch(""); showToast(); haptic(); });
-cvs.addEventListener('touchstart', ()=>{ launch(""); showToast(); haptic(); }, {passive:true});
-
-
-/* ===== Music Control ===== */
-function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
-
-// Play/Pause button (Mobile)
-const tapMusicMobile = document.getElementById('tapMusicMobile'); if(tapMusicMobile) tapMusicMobile.onclick = ()=>{
-  if(bgm.paused) safePlay(); else bgm.pause();
-};
-
-// Play/Pause button (Desktop)
-const tapMusicDesktop = document.getElementById('headerMusicBtn');
-if(tapMusicDesktop) tapMusicDesktop.onclick = ()=>{
-  if(bgm.paused) safePlay(); else bgm.pause();
-};
-
-// Start button on splash screen
-document.getElementById('startBtn').onclick = ()=>{
-  hideSplash();
-  safePlay();
-};
-
-// Hide splash screen logic
-const splash=document.getElementById('splash');
-function hideSplash(){
-  if(!splash) return;
-  splash.classList.add('hide');
-  setTimeout(()=>splash.remove?.(),350);
-}
-// Auto-hide splash after a delay if user doesn't interact
-setTimeout(hideSplash, 1800);
-
-
-/* ===== Firework Class & Logic ===== */
-class Firework{
-  constructor(x){ this.x=x; this.y=waterY(); this.vy=-280; this.state='rise'; this.parts=[]; }
-  update(dt){
-    if(this.state==='rise'){ this.y+=this.vy*dt; this.vy+=140*dt; if(this.vy>=-10) this.explode(); }
-    else { for(const p of this.parts){ p.vx*=0.99; p.vy+=70*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.a*=0.985; } this.parts=this.parts.filter(p=>p.a>0.06); }
-  }
-  explode(){
-    this.state='explode';
-    for(let i=0;i<36;i++){
-      const a=i/36*Math.PI*2, sp=110+rnd(0,90);
-      this.parts.push({x:this.x,y:this.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,a:1});
+function showToast() {
+    const toastEl = document.getElementById('toast');
+    if (toastEl) {
+        toastEl.textContent = 'คำอธิษฐานของคุณถูกส่งไปแล้ว';
+        toastEl.classList.add('show');
+        setTimeout(() => {
+            toastEl.classList.remove('show');
+        }, 3000);
     }
-  }
-  draw(g){
-    if(this.state==='rise'){ g.strokeStyle='rgba(255,220,120,.9)'; g.beginPath(); g.moveTo(this.x,this.y+16); g.lineTo(this.x,this.y); g.stroke(); }
-    for(const p of this.parts){
-      const R=64*p.a;
-      if(logoImg && logoImg._ok){
-        g.save(); g.globalAlpha=p.a; g.drawImage(logoImg,p.x-R,p.y-R,R*2,R*2); g.restore();
-      }else{
-        g.save(); g.globalAlpha=p.a; g.fillStyle='#fff'; g.beginPath(); g.arc(p.x,p.y,R,0,Math.PI*2); g.fill(); g.lineWidth=8; g.strokeStyle='#e31f26'; g.beginPath(); g.arc(p.x,p.y,R-4,0,Math.PI*2); g.stroke(); g.restore();
-      }
+}
+
+function resizeCanvas() {
+    canvas = document.getElementById(CANVAS_ID);
+    if (!canvas) return;
+
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    // Recalculate tuktuk position based on new height
+    if (tuktuk.image) {
+        tuktuk.y = height - ROAD_OFFSET_FROM_BOTTOM - tuktuk.height + 2; // +2px to lift it slightly
     }
-  }
-}
-const fireworks=[];
-function spawnTriple(){ const w=cvs.width; [w*.25,w*.5,w*.75].forEach(x=>fireworks.push(new Firework(x))); }
-setTimeout(spawnTriple, 2500); // Initial burst
-setInterval(spawnTriple,10000); // Recurring bursts
 
-/* ===== Tuk-Tuk Logic ===== */
-// Road Y from visible background <img>
-// Since we set object-fit: cover and object-position: center bottom,
-// the bottom of the image aligns with the bottom of the stage.
-// We will use a fixed offset from the bottom of the canvas for the road.
-const ROAD_OFFSET_FROM_BOTTOM = 452; // Adjusted to 452 to ensure tuk-tuk is definitely on the red line (based on user feedback)
-
-function roadYFromBackground(){
-  // Calculate the road Y position relative to the canvas bottom
-  let y = cvs.height - ROAD_OFFSET_FROM_BOTTOM;
-  // Ensure it's not above the water line (optional, but good for safety)
-  y = Math.max(y, waterY() + 10);
-  return y;
+    // Recalculate krathong positions
+    krathongs.forEach(k => {
+        k.y = height - (height * WATER_FACTOR) - k.height / 2;
+    });
 }
 
-const tuk={x:-220,w:TUK_W,h:TUK_H,speed:TUK_SPEED};
-function drawTuk(dt){
-  tuk.x += tuk.speed*dt;
-  if(tuk.x > cvs.width + 220) tuk.x = -220;
-  const y = roadYFromBackground() - tuk.h; // Position based on background image
-  if(tukImg && tukImg._ok){ ctx.drawImage(tukImg, tuk.x, Math.min(Math.max(y,0), cvs.height-tuk.h), tuk.w, tuk.h); }
-  else { ctx.fillStyle='#2ecc71'; ctx.fillRect(tuk.x, Math.min(Math.max(y,0), cvs.height-tuk.h), tuk.w, tuk.h); }
-}
-
-/* ===== Drawing Loop ===== */
-let waveT=0,last=performance.now();
-function drawWater(){
-  const w=cvs.width,h=cvs.height,y=waterY();
-  ctx.fillStyle='rgba(10,32,63,0.96)'; ctx.fillRect(0,y,w,h-y);
-  ctx.lineWidth=1.6; ctx.lineCap='round'; ctx.strokeStyle='rgba(255,255,255,0.2)';
-  for(let i=0;i<10;i++){
-    ctx.beginPath();
-    for(let x=0;x<w;x+=20){
-      const yy=y+Math.sin((x/40)+waveT*1.2+i)*6+i*16;
-      if(x===0) ctx.moveTo(x,yy); else ctx.lineTo(x,yy);
+// Krathong Class
+class Krathong {
+    constructor(id, image, wish) {
+        this.id = id;
+        this.image = image;
+        this.wish = wish;
+        this.width = 80;
+        this.height = 80;
+        this.x = width + (id * KRATHONG_SPACING); // Start off-screen with spacing
+        this.y = height - (height * WATER_FACTOR) - this.height / 2; // Position in the water
+        this.speed = KRATHONG_SPEED + (Math.random() * 0.2 - 0.1); // Slight speed variation
+        this.waveOffset = Math.random() * Math.PI * 2; // Start at random point in wave cycle
     }
-    ctx.stroke();
-  }
+
+    update(deltaTime) {
+        if (isLaunched) {
+            this.x -= this.speed * deltaTime * 0.01;
+            // Simple wave motion
+            this.y = height - (height * WATER_FACTOR) - this.height / 2 + Math.sin(this.waveOffset + this.x * 0.01) * 5;
+        }
+    }
+
+    draw() {
+        if (this.image) {
+            ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+        }
+    }
 }
 
-function loop(ts){
-  const dt = Math.min(0.033,(ts-last)/1000); last=ts; waveT+=dt;
-  ctx.clearRect(0,0,cvs.width,cvs.height);
+// Firework Class
+class Firework {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.particles = [];
+        this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        this.life = 0;
+        this.maxLife = 100;
+        this.exploded = false;
+        this.createParticles();
+    }
 
-  // 1. Draw Water
-  drawWater();
+    createParticles() {
+        for (let i = 0; i < 50; i++) {
+            this.particles.push({
+                x: this.x,
+                y: this.y,
+                vx: Math.random() * 4 - 2,
+                vy: Math.random() * 4 - 2,
+                alpha: 1,
+                size: Math.random() * 2 + 1
+            });
+        }
+        this.exploded = true;
+    }
 
-  // 2. Draw Fireworks (behind tuk-tuk and krathongs)
-  for(const fw of fireworks){ fw.update(dt); fw.draw(ctx); }
+    update(deltaTime) {
+        if (this.exploded) {
+            this.life += deltaTime * 0.01;
+            this.particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.05; // Gravity
+                p.alpha -= 0.01;
+            });
+            this.particles = this.particles.filter(p => p.alpha > 0);
+        }
+    }
 
-  // 3. Draw Tuk-Tuk
-  drawTuk(dt);
+    draw() {
+        if (this.exploded) {
+            this.particles.forEach(p => {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+        }
+    }
 
-  // 4. Draw Krathongs (sorted by Y for depth effect)
-  const ordered=boats.slice().sort((a,b)=>a.y-b.y);
-  for(const b of ordered){ b.update(dt); b.draw(ctx); }
-
-  requestAnimationFrame(loop);
+    isFinished() {
+        return this.exploded && this.particles.length === 0;
+    }
 }
-requestAnimationFrame(loop);
+
+// Game Loop
+function gameLoop(timestamp) {
+    const deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
+
+    if (!ctx) return;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw water line (for visual reference)
+    ctx.fillStyle = 'rgba(0, 0, 100, 0.3)';
+    ctx.fillRect(0, height - (height * WATER_FACTOR), width, height * WATER_FACTOR);
+
+    // Update and Draw Krathongs
+    krathongs.forEach(k => {
+        k.update(deltaTime);
+        k.draw();
+    });
+
+    // Update and Draw TukTuk
+    if (tuktuk.image) {
+        if (tuktuk.x < width + tuktuk.width) {
+            tuktuk.x += TUKTUK_SPEED * deltaTime * 0.01;
+        } else {
+            tuktuk.x = -tuktuk.width; // Loop the tuktuk
+        }
+        ctx.drawImage(tuktuk.image, tuktuk.x, tuktuk.y, tuktuk.width, tuktuk.height);
+    }
+
+    // Update and Draw Fireworks
+    fireworks.forEach(f => {
+        f.update(deltaTime);
+        f.draw();
+    });
+    fireworks = fireworks.filter(f => !f.isFinished());
+
+    // Spawn new fireworks randomly
+    if (Math.random() < 0.005) {
+        fireworks.push(new Firework(Math.random() * width, Math.random() * height * 0.5));
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+// Asset Loading
+function assetLoaded() {
+    loadedAssets++;
+    const progress = (loadedAssets / totalAssets) * 100;
+    const progressEl = document.getElementById('loading-progress');
+    if (progressEl) {
+        progressEl.style.width = `${progress}%`;
+    }
+
+    if (loadedAssets === totalAssets) {
+        initGame();
+    }
+}
+
+function loadAssets() {
+    // Load TukTuk
+    tuktuk.image = new Image();
+    tuktuk.image.onload = assetLoaded;
+    tuktuk.image.src = assets.tuktuk;
+
+    // Load Krathongs
+    assets.krathongs.forEach((src, index) => {
+        const img = new Image();
+        img.onload = assetLoaded;
+        img.src = src;
+        krathongs.push(new Krathong(index, img, ''));
+    });
+
+    // Load Music
+    const musicEl = document.getElementById('bg-music');
+    if (musicEl) {
+        musicEl.src = assets.song;
+        musicEl.onloadeddata = assetLoaded;
+    }
+}
+
+// Game Initialization
+function initGame() {
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Hide splash screen
+    const splashEl = document.getElementById('splash');
+    if (splashEl) {
+        splashEl.classList.add('hidden');
+        setTimeout(() => {
+            splashEl.style.display = 'none';
+        }, 1000);
+    }
+
+    // Start the game loop
+    requestAnimationFrame(gameLoop);
+}
+
+// Event Handlers
+function launch(wish) {
+    const wishInputContainer = document.getElementById('wish-input-container');
+    if (wishInputContainer) {
+        wishInputContainer.style.display = 'none';
+    }
+
+    // Create a new krathong with the wish
+    const krathongImage = krathongs[krathongCounter % KRATHONG_COUNT].image;
+    const newKrathong = new Krathong(krathongs.length, krathongImage, wish);
+    newKrathong.x = width + 50; // Start just off-screen
+    krathongs.push(newKrathong);
+    krathongCounter++;
+    wishes.push({ id: newKrathong.id, wish: wish, timestamp: new Date().toISOString() });
+
+    isLaunched = true;
+
+    // Play music if not playing
+    const musicEl = document.getElementById('bg-music');
+    if (musicEl && !isMusicPlaying) {
+        musicEl.play().then(() => {
+            isMusicPlaying = true;
+            updateMusicButton();
+        }).catch(error => {
+            console.error("Music playback failed:", error);
+        });
+    }
+}
+
+function resetGame() {
+    krathongs = [];
+    wishes = [];
+    krathongCounter = 0;
+    tuktuk.x = -tuktuk.width;
+    isLaunched = false;
+    fireworks = [];
+    haptic();
+}
+
+function toggleMusic() {
+    const musicEl = document.getElementById('bg-music');
+    if (musicEl) {
+        if (isMusicPlaying) {
+            musicEl.pause();
+        } else {
+            musicEl.play().catch(error => {
+                console.error("Music playback failed:", error);
+            });
+        }
+        isMusicPlaying = !isMusicPlaying;
+        updateMusicButton();
+        haptic();
+    }
+}
+
+function updateMusicButton() {
+    const btnMusic = document.getElementById('btn-music');
+    if (btnMusic) {
+        btnMusic.textContent = `เพลง: ${isMusicPlaying ? 'ปิด' : 'เปิด'}`;
+    }
+}
+
+function exportCSV() {
+    if (wishes.length === 0) {
+        alert('ยังไม่มีคำอธิษฐานที่ถูกปล่อย');
+        return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,ID,Wish,Timestamp\n";
+    wishes.forEach(w => {
+        // Simple CSV escaping for wishes
+        const escapedWish = w.wish.replace(/"/g, '""');
+        csvContent += `${w.id},"${escapedWish}",${w.timestamp}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "loy_krathong_wishes.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    haptic();
+}
+
+/* ===== DOMContentLoaded: Main Entry Point ===== */
+document.addEventListener('DOMContentLoaded', () => {
+    canvas = document.getElementById(CANVAS_ID);
+    if (canvas) {
+        ctx = canvas.getContext('2d');
+    }
+
+    // Get DOM elements
+    const wishEl = document.getElementById('wish-input');
+    const wishInputContainer = document.getElementById('wish-input-container');
+
+    // Launch button (inside wish-input-container)
+    const launchEl = document.getElementById('launch');
+    if (launchEl) {
+        launchEl.onclick = () => {
+            launch(wishEl ? wishEl.value || "" : "");
+            if (wishEl) wishEl.value = "";
+            showToast();
+            haptic();
+        };
+    }
+
+    // Header buttons
+    const btnLaunchHeader = document.getElementById('btn-launch-header');
+    if (btnLaunchHeader) {
+        btnLaunchHeader.onclick = () => {
+            if (wishInputContainer) {
+                wishInputContainer.style.display = 'flex';
+            }
+            haptic();
+        };
+    }
+
+    const btnReset = document.getElementById('btn-reset');
+    if (btnReset) {
+        btnReset.onclick = resetGame;
+    }
+
+    const btnMusic = document.getElementById('btn-music');
+    if (btnMusic) {
+        btnMusic.onclick = toggleMusic;
+    }
+
+    const btnExport = document.getElementById('btn-export');
+    if (btnExport) {
+        btnExport.onclick = exportCSV;
+    }
+
+    // Mobile Bar buttons (redundant but kept for completeness, though mobileBar is hidden by CSS)
+    const btnLaunchMobile = document.getElementById('btn-launch-mobile');
+    if (btnLaunchMobile) {
+        btnLaunchMobile.onclick = () => {
+            if (wishInputContainer) {
+                wishInputContainer.style.display = 'flex';
+            }
+            haptic();
+        };
+    }
+
+    const btnResetMobile = document.getElementById('btn-reset-mobile');
+    if (btnResetMobile) {
+        btnResetMobile.onclick = resetGame;
+    }
+
+    const btnMusicMobile = document.getElementById('btn-music-mobile');
+    if (btnMusicMobile) {
+        btnMusicMobile.onclick = toggleMusic;
+    }
+
+    const btnExportMobile = document.getElementById('btn-export-mobile');
+    if (btnExportMobile) {
+        btnExportMobile.onclick = exportCSV;
+    }
+
+    // Initial music button state
+    updateMusicButton();
+
+    // Start loading assets
+    loadAssets();
+});
