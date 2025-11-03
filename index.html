@@ -94,7 +94,8 @@
             height: 100%;
         /* FINAL FIX: Use contain to ensure the whole image is visible, and center it */
         /* To make the canvas elements align correctly with the contained background, we need to ensure the background is always visible */
-        background-size: contain;
+        /* FINAL FIX: Changing to 'cover' to ensure the background always fills the screen, simplifying canvas positioning */
+        background-size: cover;
             background-repeat: no-repeat;
             background-position: center center;
             z-index: 1;
@@ -319,6 +320,6 @@
     <audio id="bg-music" loop></audio>
 
     <!-- The critical fix: New cache-busting version to force reload -->
-    <script src="main.js?v=20231104_01"></script>
+    <script src="main.js?v=20231104_02"></script>
 </body>
 </html>
