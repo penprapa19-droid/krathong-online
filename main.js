@@ -30,6 +30,7 @@ const WATER_LEVEL_OFFSET = 100;
 let canvas, ctx;
 let width, height;
 let krathongs = [];
+window.krathongs = krathongs; // FIXED: Expose to window for index.html
 let waterLevel = 0;
 let tuktuk = { x: -100, y: 0, image: null, width: 150, height: 100 };
 let fireworks = [];
