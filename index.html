@@ -8,7 +8,7 @@
     <meta name="keywords" content="ลอยกระทง, Loy Krathong, Loy Krathong Online">
     <meta name="author" content="Manus">
     <meta name="theme-color" content="#000000">
-    <link rel="icon" href="logo.png">
+    <link rel="icon" href="images/logo.png">
     <style>
         @font-face {
             font-family: 'Chonburi';
@@ -93,13 +93,15 @@
 
         @media (max-width: 768px) {
             #background {
-                background-image: url('bg5mb.png');
+                /* Corrected path to images/bg5mb.png */
+                background-image: url('images/bg5mb.png');
             }
         }
 
         @media (min-width: 769px) {
             #background {
-                background-image: url('bg5.png');
+                /* Corrected path to images/bg5.png */
+                background-image: url('images/bg5.png');
             }
         }
 
@@ -233,28 +235,7 @@
             opacity: 1;
         }
 
-        /* Mobile Controls Bar (To be hidden on mobile as per user request) */
-        #mobileBar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            box-sizing: border-box;
-            z-index: 15;
-            pointer-events: all;
-        }
-
-        #mobileBar .btn {
-            flex-grow: 1;
-            margin: 0 5px;
-            text-align: center;
-        }
-
-        /* Hide mobileBar completely on all devices, as the header controls are sufficient */
+        /* Mobile Controls Bar - Hidden via CSS */
         #mobileBar {
             display: none !important;
         }
@@ -277,7 +258,7 @@
 <body>
 
     <div id="splash">
-        <img src="logo.png" alt="Loy Krathong Logo" style="width: 150px; height: 150px;">
+        <img src="images/logo.png" alt="Loy Krathong Logo" style="width: 150px; height: 150px;">
         <div id="splash-text">กำลังเตรียมฉาก...</div>
         <div id="loading-bar">
             <div id="loading-progress"></div>
@@ -291,7 +272,7 @@
         <div id="ui-container">
             <div class="header">
                 <div class="header-left">
-                    <img src="logo.png" alt="Loy Krathong Logo" class="header-logo">
+                    <img src="images/logo.png" alt="Loy Krathong Logo" class="header-logo">
                 </div>
                 <div class="header-right">
                     <button id="btn-launch-header" class="btn">ปล่อยกระทง</button>
@@ -322,6 +303,6 @@
     <audio id="bg-music" loop></audio>
 
     <!-- The critical fix: New cache-busting version to force reload -->
-    <script src="main.js?v=20231103_5"></script>
+    <script src="main.js?v=20231103_6"></script>
 </body>
 </html>
