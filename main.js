@@ -11,7 +11,8 @@ const CANVAS_ID = 'canvas';
 const KRATHONG_COUNT = 5;
 // FINAL FIX: Increased spacing to prevent krathongs from colliding
 const KRATHONG_SPACING = 300; 
-const KRATHONG_SPEED = 0.5;
+// FINAL FIX: Increased KRATHONG_SPEED slightly (from 0.5 to 0.7)
+const KRATHONG_SPEED = 0.7;
 // FINAL FIX: Increased TUKTUK_SPEED significantly (from 1.5 to 4.0) to meet the user's request for a faster speed (40)
 const TUKTUK_SPEED = 4.0; 
 const FIREWORK_COUNT = 10;
@@ -46,6 +47,7 @@ const FIREWORK_INTERVAL = 5000;
 const assets = {
     tuktuk: 'images/tuktuk.png', 
     song: 'audio/song.mp3', 
+    fireworkLogo: 'images/no_smoking_logo.png', // Assuming this is the logo file
     krathongs: []
 };
 
@@ -54,7 +56,7 @@ for (let i = 1; i <= KRATHONG_COUNT; i++) {
 }
 
 let loadedAssets = 0;
-const totalAssets = 1 + assets.krathongs.length + 1; 
+const totalAssets = 1 + assets.krathongs.length + 1 + 1; // 1 for tuktuk, 5 for krathongs, 1 for song, 1 for fireworkLogo
 
 // Utility Functions
 function haptic() {
@@ -145,14 +147,20 @@ class Krathong {
         if (this.image) {
             ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
             
-            // FINAL FIX: Draw wish text on the krathong
+            // FINAL FIX: Draw wish text on the krathong with better styling
             if (this.wish) {
                 ctx.save();
                 ctx.fillStyle = '#000';
-                ctx.font = '12px Chonburi';
+                ctx.font = 'bold 14px Chonburi'; // Increased font size and bold
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(this.wish, this.x + this.width / 2, this.y + this.height / 2);
+                
+                // Truncate wish to fit on krathong
+                const maxLen = 10;
+                const displayWish = this.wish.length > maxLen ? this.wish.substring(0, maxLen) + '...' : this.wish;
+
+                // Position text slightly above the center of the krathong
+                ctx.fillText(displayWish, this.x + this.width / 2, this.y + this.height / 2 - 10);
                 ctx.restore();
             }
         }
@@ -170,10 +178,19 @@ class Firework {
         this.maxLife = 100;
         this.exploded = false;
         this.isFixed = isFixed;
+        this.logoImage = null; // For the logo firework
         this.createParticles();
     }
 
     createParticles() {
+        // FINAL FIX: Load logo image for firework
+        if (this.isFixed && assets.fireworkLogo) {
+            this.logoImage = new Image();
+            this.logoImage.src = assets.fireworkLogo;
+            this.exploded = true;
+            return;
+        }
+
         const particleCount = this.isFixed ? 80 : 50;
         for (let i = 0; i < particleCount; i++) {
             this.particles.push({
@@ -189,7 +206,7 @@ class Firework {
     }
 
     update(deltaTime) {
-        if (this.exploded) {
+        if (this.exploded && !this.logoImage) {
             this.life += deltaTime * 0.01;
             this.particles.forEach(p => {
                 p.x += p.vx;
@@ -203,18 +220,31 @@ class Firework {
 
     draw() {
         if (this.exploded) {
-            this.particles.forEach(p => {
-                ctx.fillStyle = this.color;
-                ctx.globalAlpha = p.alpha;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            ctx.globalAlpha = 1;
+            if (this.logoImage && this.logoImage.complete) {
+                // FINAL FIX: Draw the logo image instead of particles
+                const logoSize = 100;
+                ctx.globalAlpha = 1 - (this.life / this.maxLife); // Fade out the logo
+                ctx.drawImage(this.logoImage, this.x - logoSize / 2, this.y - logoSize / 2, logoSize, logoSize);
+                ctx.globalAlpha = 1;
+                this.life += 1; // Manually increase life for fade out
+            } else if (!this.logoImage) {
+                this.particles.forEach(p => {
+                    ctx.fillStyle = this.color;
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.globalAlpha = 1;
+            }
         }
     }
 
     isFinished() {
+        // FINAL FIX: Check if logo firework has faded out
+        if (this.logoImage) {
+            return this.life >= this.maxLife;
+        }
         return this.exploded && this.particles.length === 0;
     }
 }
@@ -269,17 +299,17 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
-// FINAL FIX: Re-introducing water line drawing function
+// FINAL FIX: Re-introducing water line drawing function with more lines and slower speed
 function drawWaterLines() {
     const waterLevel = height - WATER_LEVEL_OFFSET;
     const waveHeight = 5;
-    const waveLength = 50;
-    const time = Date.now() * 0.002;
+    const waveLength = 30; // Increased frequency (more lines)
+    const time = Date.now() * 0.001; // Slower speed (0.002 -> 0.001)
 
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
     ctx.lineWidth = 1;
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) { // Increased number of lines (3 -> 5)
         ctx.beginPath();
         ctx.moveTo(0, waterLevel + i * 5);
         for (let x = 0; x < width; x++) {
@@ -309,6 +339,12 @@ function loadAssets() {
     tuktuk.image = new Image();
     tuktuk.image.onload = assetLoaded;
     tuktuk.image.src = assets.tuktuk;
+
+    // Load Firework Logo
+    const fireworkLogoImage = new Image();
+    fireworkLogoImage.onload = assetLoaded;
+    fireworkLogoImage.src = assets.fireworkLogo;
+    // We don't need to store it globally, as it's loaded into the Firework class constructor
 
     // Load Krathongs
     const krathongImages = [];
