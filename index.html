@@ -490,13 +490,13 @@ addEventListener('resize', size);
 
 // Loaders
 function loadImage(src){ return new Promise((res)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); }
-let tukImg=null, logoImg=null, krathongs=[], readyCount=0;
+let tukImg=null, logoImg=null, readyCount=0; // FIXED: Removed krathongs declaration (defined in main.js)
 const totalToLoad=1+1+KRATHONG_SRCS.length;
 function markReady(){ readyCount++; const el = document.getElementById('loadInfo'); if(el) el.textContent = `โหลดแล้ว ${readyCount}/${totalToLoad}`; }
 (async()=>{
   tukImg = await loadImage(TUK_SRC); markReady();
   logoImg = await loadImage(LOGO_SRC); markReady();
-  for(const s of KRATHONG_SRCS){ krathongs.push(await loadImage(s)); markReady(); }
+  for(const s of KRATHONG_SRCS){ const img = await loadImage(s); if(window.krathongs) window.krathongs.push(img); markReady(); }
 })();
 
 // Audio
