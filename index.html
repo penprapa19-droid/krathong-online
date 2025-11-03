@@ -2,440 +2,67 @@
 <html lang="th">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
 <style>
   :root{ --ui:#0b1220; --panel:#0e1726; --muted:#9bb0c9; --accent:#3dd6ed; --good:#7ef0a0; }
-  
-  * {
-    box-sizing: border-box;
-  }
-  
-  body{
-    margin:0; 
-    height:100%; 
-    background:#061018; 
-    color:#ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  }
-  
-  header{
-    padding:20px 20px; 
-    position:fixed; 
-    z-index:10; 
-    inset:0 0 auto 0; 
-    background:linear-gradient(180deg, #061018 0%, #061827 100%);
-  }
-  
-  h1{
-    font-size:24px; 
-    margin:0px 0px;
-  }
-  
-  .row{
-    display:flex; 
-    flex-wrap:wrap; 
-    gap:10px; 
-    align-items:center;
-  }
-  
-  .pill{
-    background:#ff0000; 
-    border:2px solid #e87575; 
-    padding:10px 12px; 
-    border-radius:12px;
-    font-size:16px;
-    white-space: nowrap;
-  }
-  
-  .btn{
-    background:#0f1c33; 
-    border:2px solid #28508a; 
-    border-radius:12px; 
-    color:#e9f0ff; 
-    padding:10px 16px;
-    cursor:pointer; 
-    font-size:16px;
-    min-height:44px;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    transition: all 0.2s ease;
-  }
-  
-  .btn:hover{
-    background:#1a2a45;
-  }
-  
-  .btn:active{
-    transform:translateY(1px);
-  }
-  
-  .good{
-    background:#104529; 
-    border-color:#1b7d4e;
-  }
-  
-  .good:hover{
-    background:#1a5a3a;
-  }
-  
-  .bad{
-    background:#0b61d3; 
-    border-color:#0e96ca;
-  }
-  
-  .warn{
-    background:#8a5c00;
-    border-color:#b37700;
-  }
-  
-  /* Layers */
-  #stage{
-    position:fixed;
-    inset:0; 
-    z-index:0; 
-    display:grid; 
-    place-items:center; 
-    overflow:hidden;
-  }
-  
-  #bgLayer{
-    max-width:100%; 
-    max-height:100%; 
-    width:100%; 
-    height:100%; 
-    object-fit:contain; 
-    object-position:center center;
-  }
-  
-  #scene{
-    position:fixed;
-    inset:0; 
-    z-index:1; 
-    width:100%; 
-    height:100%; 
-    touch-action:manipulation;
-  }
-  
-  /* Splash */
-  #splash{
-    position:fixed; 
-    inset:0; 
-    background:rgba(3,7,14,.85); 
-    display:grid; 
-    place-items:center; 
-    z-index:20;
-  }
-  
-  .card{
-    background:#0e1726;
-    border:2px solid #1a2a45;
-    border-radius:12px;
-    padding:22px 24px;
-    box-shadow:0 10px 40px rgba(0,0,0,.4);
-    width:min(92vw,560px);
-    text-align:center;
-  }
-  
-  #splash.hide{
-    opacity:0;
-    pointer-events:none;
-    transition:.35s;
-  }
-  
-  input[type="text"]{
-    background:#0f1c33; 
-    border:2px solid #284a7e; 
-    border-radius:12px; 
-    color:#e9f0ff; 
-    padding:10px 16px; 
-    font-size:16px;
-    min-height:44px;
-    flex:1;
-    min-width:200px;
-  }
-  
-  input[type="text"]::placeholder{
-    color:#6b8aaa;
-  }
-  
-  /* Wish list */
-  #wishList{
-    max-width:680px; 
-    font-size:1rem; 
-    list-style:none; 
-    padding-left:20px;
-    padding-right:20px;
-  }
-  
-  #wishList .num{
-    display:inline-block; 
-    min-width:64px; 
-    margin-right:.35rem; 
-    color:#9bd3ff;
-  }
-  
-  /* Mobile bar */
-  #mobileBar{
-    position:fixed;
-    left:0;
-    right:0;
-    bottom:0;
-    display:none;
-    gap:.6rem;
-    justify-content:center;
-    padding:.8rem;
-    z-index:12;
-    background:linear-gradient(180deg, rgba(6,16,24,0), rgba(6,16,24,.95));
-  }
-  
-  #mobileBar .btn{
-    padding:.7rem 1.1rem;
-    border-radius:1rem;
-  } 
-  
-  /* Toast */
-  #toast{
-    position:fixed;
-    left:50%;
-    bottom:86px;
-    transform:translateX(-50%); 
-    background:#0e1726; 
-    border:2px solid #1a2a45; 
-    border-radius:12px;
-    padding:.45rem .9rem;
-    z-index:13;
-    opacity:0;
-    transition:opacity .25s;
-    max-width:90vw;
-    text-align:center;
-  }
-  
-  #toast.show{
-    opacity:.96;
-  }
+  body{margin:0; height:100%; background:#061018; color:#ffffff;}
+  header{padding:20px 20px; position:fixed; z-index:10; inset:0 0 auto 0; background:linear-gradient(180deg, #061018 0%, #061827 100%)}
+  h1{font-size:24px; margin:0px 0px}
+  .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+  .pill{background:#ff0000; border:2px solid #e87575; padding:10px 10px; border-radius:12px}
+  .btn{background:#0f1c33; border:2px solid #28508a; border-radius:12px; color:#e9f0ff; padding:10px 10px;cursor:pointer; font-size:16PX}
+  .btn:active{padding:10px 10px; transform:translateY(1px)}
+  .good{background:#104529; padding:10px 10px; border-color:#1b7d4e}
+  .bad{background:#0b61d3; padding:10px 10px; border-color:#0e96ca}
+  #stage{position:fixed;inset:calc(0px) 0 0 0; z-index:0; display:grid; place-items:center; overflow:hidden}
+  #bgLayer{max-width:100%; max-height:100%; width:100%; height:100%; object-fit:cover; object-position:center bottom;}
+  #scene{position:fixed;inset:0 0 0 0; z-index:1; width:100%; height:100%; touch-action:manipulation}
+  #splash{position:fixed; inset:0; background:rgba(3,7,14,.85); display:grid; place-items:center; z-index:20}
+  .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
+  #splash.hide{opacity:0;pointer-events:none;transition:.35s}
+  input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX; flex-grow:1;}
+  #wishList{max-width:680px; font-size:1rem; list-style:none; padding-left:20px}
+  #wishList .num{display:inline-block; min-width:64px; margin-right:.35rem; color:#9bd3ff}
+  #mobileBar{position:fixed;left:0;right:0;bottom:0;display:none;gap:.6rem;justify-content:center;padding:.6rem;z-index:12;
+             background:linear-gradient(180deg, rgba(6,16,24,0), rgba(6,16,24,.8));}
+  #mobileBar .btn{padding:.7rem 1.1rem;border-radius:1rem} 
+  #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%); background:#0e1726; border:2px solid #1a2a45; border-radius:12px ;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
+  #toast.show{opacity:.96}
 
-  /* Tablet styles */
-  @media (min-width: 641px) and (max-width: 1024px){
-    header{
-      padding:15px 20px;
-    }
-    h1{
-      font-size:20px;
-    }
-    .btn{
-      font-size:15px;
-      padding:9px 14px;
-    }
-  }
-
-  /* Mobile styles */
+  /* CSS เพื่อซ่อนปุ่มใน Header บนมือถือ */
   @media (max-width:640px){
-    body{
-      margin:0; 
-      height:100%; 
-      background:#061018; 
-      color:#ffffff;
-    }
+    header{padding:10px 10px;}
+    #scene{ top:100px; height:calc(100% - 100px); } /* Adjusted top for mobile header */
+    h1{font-size:20px; margin:0px 0px}
+    .row{gap:8px;}
+    .pill{padding:8px 8px;}
+    .btn{padding:8px 8px; font-size:14PX}
+    input[type="text"]{min-width:100%; font-size:14PX; margin-top:8px; flex-grow:1;}
     
-    header{
-      padding:12px 15px;
-      position:fixed; 
-      z-index:10; 
-      inset:0 0 auto 0; 
-      background:linear-gradient(180deg, #061018 0%, #061827 100%);
-    }
-    
-    h1{
-      font-size:16px;
-      margin:0px 0px;
-    }
-    
-    .row{
-      display:flex; 
-      flex-wrap:wrap; 
-      gap:8px; 
-      align-items:stretch;
-    }
-    
-    .row > *{
-      flex:1 1 auto;
-    }
-    
-    .pill{
-      padding:8px 12px;
-      font-size:14px;
-      min-width:120px;
-      text-align:center;
-    }
-    
-    .btn{
-      font-size:14px;
-      padding:10px 12px;
-      min-height:44px;
-    }
-    
-    input[type="text"]{
-      font-size:14px;
-      padding:10px 12px;
-      min-width:0;
-      width:100%;
-      flex:1 1 100%;
-    }
-    
-    #stage{
-      position:fixed;
-      inset:0; 
-      z-index:0; 
-      display:grid; 
-      place-items:center; 
-      overflow:hidden;
-    }
-    
-    #bgLayer{
-      max-width:100%; 
-      max-height:100%; 
-      width:100%; 
-      height:100%; 
-      object-fit:contain; 
-      object-position:center center;
-    }
-    
-    #scene{
-      position:fixed;
-      inset:0; 
-      z-index:1; 
-      width:100%; 
-      height:100%; 
-      touch-action:manipulation;
-    }
-    
-    #mobileBar{
-      display:flex;
-      flex-wrap:wrap;
-    }
-    
-    /* Splash */
-    #splash{
-      position:fixed; 
-      inset:0; 
-      background:rgba(3,7,14,.85); 
-      display:grid; 
-      place-items:center; 
-      z-index:20;
-    }
-    
-    .card{
-      background:#0e1726; 
-      border:2px solid #1a2a45; 
-      border-radius:12px; 
-      padding:20px; 
-      box-shadow:0 10px 40px rgba(0,0,0,.4); 
-      width:min(90vw,320px);
-      text-align:center;
-    }
-    
-    #splash.hide{
-      opacity:0;
-      pointer-events:none;
-      transition:.35s;
-    }
-    
-    /* Wish list */
-    #wishList{
-      max-width:100%; 
-      font-size:0.875rem; 
-      list-style:none; 
-      padding-left:10px;
-      padding-right:10px;
-    }
-    
-    #wishList .num{
-      display:inline-block; 
-      min-width:50px; 
-      margin-right:.25rem; 
-      color:#9bd3ff;
-      font-size:0.8rem;
-    }
-    
-    #wishList li{
-      margin-bottom:5px;
-      word-break:break-word;
-    }
-  }
-  
-  /* Very small mobile */
-  @media (max-width:375px){
-    h1{
-      font-size:14px;
-    }
-    
-    .btn{
-      font-size:13px;
-      padding:8px 10px;
-    }
-    
-    .pill{
-      font-size:13px;
-      padding:6px 10px;
-    }
-    
-    input[type="text"]{
-      font-size:13px;
-      padding:8px 10px;
-    }
-    
-    header{
-      padding:10px 12px;
-    }
-    
-    .row{
-      gap:6px;
-    }
+    .card{width:min(90vw,300px);}
+    /* ซ่อน mobileBar บนมือถือ */
+    #mobileBar { display: none !important; }
   }
 </style>
-
 <link rel="icon" href="images/logo.png">
 </head>
-
 <body>
 <header>
   <div class="row">
     <h1>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</h1>
   </div>
-  <div class="row" style="margin-top:12px">
+  <div class="row" style="margin-top:10px">
     <span class="pill">ลอยแล้ว <strong id="statCount">0</strong> ใบ</span>
-    <button id="playBtn" class="btn" style="display: none;">▶ เล่นเพลง</button>
-    <button id="stopBtn" class="btn" style="display: none;">⏸ หยุด</button>
-    <button id="tapMusic" class="btn">▶/⏸ เพลง</button>
-    <button id="exportStat" class="btn warn">⬇️ CSV</button>
+    <button id="headerMusicBtn" class="btn">▶/⏸ เพลง</button>
+    <button id="resetBtn" class="btn bad">🧹 เริ่มนับใหม่</button>
+    <button id="exportBtn" class="btn bad">⬇️ รายงาน CSV</button>
   </div>
   <div class="row" style="margin-top:10px">
-    <button id="resetBtn" class="btn bad" style="display: none;">🧹 เริ่มนับใหม่</button>
-    <button id="exportBtn" class="btn bad" style="display: none;">⬇️ รายงาน CSV</button>
-    <input id="wish" class="btn good" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ...">
-    <button id="launch" class="btn good">ปล่อย</button>
+    <input id="wish" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ…" style="flex-grow:1;">
+    <button id="headerLaunchBtn" class="btn good">ปล่อย</button>
   </div>
-
-<!-- Default Statcounter code for ลอยกระทง -->
-<script type="text/javascript">
-var sc_project=13175986; 
-var sc_invisible=1; 
-var sc_security="8a0ce33d"; 
-</script>
-<script type="text/javascript"
-src="https://www.statcounter.com/counter/counter.js"
-async></script>
-<noscript><div class="statcounter"><a title="Web Analytics
-Made Easy - Statcounter" href="https://statcounter.com/"
-target="_blank"><img class="statcounter"
-src="https://c.statcounter.com/13175986/0/8a0ce33d/1/"
-alt="Web Analytics Made Easy - Statcounter"
-referrerpolicy="no-referrer-when-downgrade"></a></div></noscript>
-<!-- End of Statcounter Code -->
 </header>
-
 <div id="stage">
     <picture>
       <source media="(max-width:640px)" srcset="images/bg5mb.png">
@@ -445,11 +72,10 @@ referrerpolicy="no-referrer-when-downgrade"></a></div></noscript>
 <canvas id="scene"></canvas>
 <div id="toast">ปล่อยแล้ว 🎋</div>
 <div id="mobileBar">
-  <button id="tapLaunch" class="btn good" style="display: none;">ปล่อยกระทง</button>
-  <button id="tapMusic2" class="btn" style="display: none;">▶/⏸ เพลง</button>
+  <button id="tapLaunchMobile" class="btn good">ปล่อยกระทง</button>
+  <button id="tapMusicMobile" class="btn">▶/⏸ เพลง</button>
 </div>
 <audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
-
 <div id="splash">
   <div class="card">
     <h1 style="margin:4px 0 0 0">แตะหน้าจอเพื่อเริ่มลอยกระทง</h1>
@@ -457,140 +83,9 @@ referrerpolicy="no-referrer-when-downgrade"></a></div></noscript>
     <button id="startBtn" class="btn good">เริ่มลอยกระทง</button>
   </div>
 </div>
-
 <section style="position:fixed; left:10px; bottom:10px; right:10px; z-index:9; color:#bbccdd; pointer-events:none;">
   <ul id="wishList"></ul>
 </section>
-
-<script src="main.js?v=20231104_05"></script>
-<script>
-// FIXED: Removed canvas declaration to avoid conflict with main.js
-// Files - FIXED: Added images/ prefix
-const KRATHONG_SRCS=["images/kt1.png","images/kt2.png","images/kt3.png","images/kt4.png","images/kt5.png"];
-const TUK_SRC="images/tuktuk.png";
-const LOGO_SRC="images/logo.png";
-
-// Params
-const WATER_PCT=80, DIP_PX=60, WAVES=10, WAVE_AMP=6, WAVE_GAP=16;
-const ROAD_FROM_BOTTOM=185;
-const TUK={w:140,h:90,speed:40};
-
-const bgEl=document.getElementById('bgLayer');
-// FIXED: Removed canvas declaration - it's handled in main.js
-function size(){ 
-  const canvas = document.getElementById('scene');
-  if (!canvas) return;
-  const header = document.querySelector('header');
-  const headerHeight = header ? header.offsetHeight : 0;
-  canvas.width=innerWidth; 
-  canvas.height=innerHeight - headerHeight; 
-}
-addEventListener('resize', size); 
-// size() will be called from main.js after canvas is initialized
-
-// Loaders
-function loadImage(src){ return new Promise((res)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); }
-let tukImg=null, logoImg=null, readyCount=0; // FIXED: Removed krathongs declaration (defined in main.js)
-const totalToLoad=1+1+KRATHONG_SRCS.length;
-function markReady(){ readyCount++; const el = document.getElementById('loadInfo'); if(el) el.textContent = `โหลดแล้ว ${readyCount}/${totalToLoad}`; }
-(async()=>{
-  tukImg = await loadImage(TUK_SRC); markReady();
-  logoImg = await loadImage(LOGO_SRC); markReady();
-  for(const s of KRATHONG_SRCS){ const img = await loadImage(s); if(window.krathongs) window.krathongs.push(img); markReady(); }
-})();
-
-// Audio
-const bgm=document.getElementById('bgm');
-function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
-const playBtn = document.getElementById('playBtn');
-const tapMusic = document.getElementById('tapMusic');
-const stopBtn = document.getElementById('stopBtn');
-if(playBtn) playBtn.onclick = safePlay;
-if(tapMusic) tapMusic.onclick = ()=>{ if(bgm.paused) safePlay(); else bgm.pause(); };
-if(stopBtn) stopBtn.onclick = ()=>{ try{ bgm.pause(); }catch{} };
-
-const splash=document.getElementById('splash');
-function hideSplash(){ if(!splash) return; splash.classList.add('hide'); setTimeout(()=>{ if(splash.remove) splash.remove(); },350); }
-const startBtn = document.getElementById('startBtn');
-if(startBtn) startBtn.onclick = ()=>{ hideSplash(); safePlay(); };
-setTimeout(hideSplash, 1800);
-
-// Wish list / counters / logging for report
-const LS_COUNT="loy.count", LS_WISHES="loy.wishes.queue", LS_SEQ="loy.seq", LS_LOG="loy.wishes.log";
-let total=+(localStorage.getItem(LS_COUNT)||0), seq=+(localStorage.getItem(LS_SEQ)||0);
-const statCountEl = document.getElementById('statCount');
-if(statCountEl) statCountEl.textContent=total;
-
-function bump(){ total++; localStorage.setItem(LS_COUNT,total); const el = document.getElementById('statCount'); if(el) el.textContent=total; }
-function pushWish(text){ 
-  let arr=[]; try{ arr=JSON.parse(localStorage.getItem(LS_WISHES)||"[]"); }catch{}; 
-  seq++; localStorage.setItem(LS_SEQ, seq); 
-  const item={n:seq,w:text||"",t:Date.now()};
-  arr.push(item); localStorage.setItem(LS_WISHES, JSON.stringify(arr)); 
-
-  // log สำหรับ report
-  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{};
-  log.push(item); localStorage.setItem(LS_LOG, JSON.stringify(log));
-  renderWish(); 
-}
-
-function renderWish(){ 
-  const ul=document.getElementById('wishList'); 
-  if(!ul) return;
-  let arr=[]; 
-  try{ arr=JSON.parse(localStorage.getItem(LS_WISHES)||"[]"); }catch{}; 
-  const view=arr.slice(-6); 
-  ul.innerHTML=view.map(x=>`<li><span class="num">คนที่ ${x.n}</span>🕯️ ${escapeHtml(x.w)}</li>`).join(""); 
-}
-
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));}
-renderWish();
-
-// Export CSV
-const exportBtn = document.getElementById('exportBtn');
-const exportStat = document.getElementById('exportStat');
-const exportFunc = ()=>{
-  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{}
-  const rows=[["seq","timestamp","ISO","wish"]];
-  for(const x of log){ const iso=new Date(x.t||Date.now()).toISOString(); rows.push([x.n, x.t, iso, (x.w||"").replace(/"/g,'""')]); }
-  const csv=rows.map(r=>r.map(v=>`"${String(v)}"`).join(",")).join("\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download="loykrathong_report.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
-};
-if(exportBtn) exportBtn.onclick = exportFunc;
-if(exportStat) exportStat.onclick = exportFunc;
-
-// Reset
-const resetBtn = document.getElementById('resetBtn');
-if(resetBtn) resetBtn.onclick=()=>{
-  if(confirm("ยืนยันเริ่มนับใหม่และลบคำอธิษฐานทั้งหมด?")){
-    localStorage.removeItem(LS_COUNT);
-    localStorage.removeItem(LS_WISHES);
-    localStorage.removeItem(LS_SEQ);
-    localStorage.removeItem(LS_LOG);
-    total=0; seq=0;
-    const el = document.getElementById('statCount');
-    if(el) el.textContent=total;
-    renderWish();
-  }
-};
-
-// Launch
-const launchBtn = document.getElementById('launch');
-const wishInput = document.getElementById('wish');
-if(launchBtn) launchBtn.onclick=()=>{
-  if(!wishInput) return;
-  const w=wishInput.value.trim();
-  if(!w){ alert("กรุณาพิมพ์คำอธิษฐาน"); return; }
-  bump(); pushWish(w);
-  wishInput.value="";
-  const t=document.getElementById('toast'); 
-  if(t) {
-    t.classList.add('show'); 
-    setTimeout(()=>t.classList.remove('show'),2000);
-  }
-};
-</script>
+<script src="main.js?v=20231104_final"></script>
 </body>
 </html>
