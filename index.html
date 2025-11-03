@@ -86,24 +86,19 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-size: cover;
-            background-position: center bottom;
+            /* FINAL FIX: Use contain to ensure the whole image is visible, and center it */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center center;
             z-index: 1;
         }
 
-        @media (max-width: 768px) {
-            #background {
-                /* FIX: Corrected path to images/bg5mb.png */
-                background-image: url('images/bg5mb.png');
-            }
+        /* FINAL FIX: Use only one background image as requested, and ensure path is correct */
+        #background {
+            background-image: url('images/bg5.png');
         }
 
-        @media (min-width: 769px) {
-            #background {
-                /* FIX: Corrected path to images/bg5.png */
-                background-image: url('images/bg5.png');
-            }
-        }
+        /* Removed media queries for bg5mb.png as it was causing issues and user wants one responsive background */
 
         #canvas {
             position: absolute;
@@ -303,6 +298,6 @@
     <audio id="bg-music" loop></audio>
 
     <!-- The critical fix: New cache-busting version to force reload -->
-    <script src="main.js?v=20231103_9"></script>
+    <script src="main.js?v=20231103_11"></script>
 </body>
 </html>
