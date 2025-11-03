@@ -1,91 +1,327 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
-<style>
-  :root{ --ui:#0b1220; --panel:#0e1726; --muted:#9bb0c9; --accent:#3dd6ed; --good:#7ef0a0; }
-  body{margin:0; height:100%; background:#061018; color:#ffffff;}
-  header{padding:20px 20px; position:fixed; z-index:10; inset:0 0 auto 0; background:linear-gradient(180deg, #061018 0%, #061827 100%)}
-  h1{font-size:24px; margin:0px 0px}
-  .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
-  .pill{background:#ff0000; border:2px solid #e87575; padding:10px 10px; border-radius:12px}
-  .btn{background:#0f1c33; border:2px solid #28508a; border-radius:12px; color:#e9f0ff; padding:10px 10px;cursor:pointer; font-size:16PX}
-  .btn:active{padding:10px 10px; transform:translateY(1px)}
-  .good{background:#104529; padding:10px 10px; border-color:#1b7d4e}
-  .bad{background:#0b61d3; padding:10px 10px; border-color:#0e96ca}
-  #stage{position:fixed;inset:calc(0px) 0 0 0; z-index:0; display:grid; place-items:center; overflow:hidden}
-  #bgLayer{max-width:100%; max-height:100%; width:100%; height:100%; object-fit:cover; object-position:center bottom;}
-  #scene{position:fixed;inset:0 0 0 0; z-index:1; width:100%; height:100%; touch-action:manipulation}
-  #splash{position:fixed; inset:0; background:rgba(3,7,14,.85); display:grid; place-items:center; z-index:20}
-  .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
-  #splash.hide{opacity:0;pointer-events:none;transition:.35s}
-  input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX; flex-grow:1;}
-  #wishList{max-width:680px; font-size:1rem; list-style:none; padding-left:20px}
-  #wishList .num{display:inline-block; min-width:64px; margin-right:.35rem; color:#9bd3ff}
-  #mobileBar{position:fixed;left:0;right:0;bottom:0;display:none;gap:.6rem;justify-content:center;padding:.6rem;z-index:12;
-             background:linear-gradient(180deg, rgba(6,16,24,0), rgba(6,16,24,.8));}
-  #mobileBar .btn{padding:.7rem 1.1rem;border-radius:1rem} 
-  #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%); background:#0e1726; border:2px solid #1a2a45; border-radius:12px ;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
-  #toast.show{opacity:.96}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ลอยกระทงออนไลน์</title>
+    <meta name="description" content="ลอยกระทงออนไลน์">
+    <meta name="keywords" content="ลอยกระทง, Loy Krathong, Loy Krathong Online">
+    <meta name="author" content="Manus">
+    <meta name="theme-color" content="#000000">
+    <link rel="icon" href="logo.png">
+    <style>
+        @font-face {
+            font-family: 'Chonburi';
+            src: url('Chonburi-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
 
-  /* CSS เพื่อซ่อนปุ่มใน Header บนมือถือ */
-  @media (max-width:640px){
-    header{padding:10px 10px;}
-    #scene{ top:100px; height:calc(100% - 100px); } /* Adjusted top for mobile header */
-    h1{font-size:20px; margin:0px 0px}
-    .row{gap:8px;}
-    .pill{padding:8px 8px;}
-    .btn{padding:8px 8px; font-size:14PX}
-    input[type="text"]{min-width:100%; font-size:14PX; margin-top:8px; flex-grow:1;}
-    #mobileBar{display:flex}
-    .card{width:min(90vw,300px);}
-    /* ซ่อน mobileBar บนมือถือ */
-    #mobileBar { display: none !important; }
-  }
-</style>
-<link rel="icon" href="images/logo.png">
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Chonburi', sans-serif;
+            color: #fff;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        #splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease-out;
+        }
+
+        #splash.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #splash-text {
+            font-size: 2em;
+            margin-top: 20px;
+            color: #ffcc00;
+            text-shadow: 0 0 10px #ff9900;
+        }
+
+        #loading-bar {
+            width: 80%;
+            max-width: 400px;
+            height: 10px;
+            background-color: #333;
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        #loading-progress {
+            height: 100%;
+            width: 0;
+            background-color: #ffcc00;
+            transition: width 0.3s ease-out;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center bottom;
+            z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            #background {
+                background-image: url('bg5mb.png');
+            }
+        }
+
+        @media (min-width: 769px) {
+            #background {
+                background-image: url('bg5.png');
+            }
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 2;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none; /* Allow clicks to pass through to canvas by default */
+        }
+
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            pointer-events: all; /* Re-enable clicks for header elements */
+        }
+
+        .header-left, .header-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-logo {
+            height: 40px;
+            pointer-events: none;
+        }
+
+        .btn {
+            background-color: rgba(0, 0, 0, 0.6);
+            color: #ffcc00;
+            border: 2px solid #ffcc00;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Chonburi', sans-serif;
+            font-size: 1em;
+            transition: background-color 0.3s, color 0.3s;
+            pointer-events: all;
+        }
+
+        .btn:hover {
+            background-color: #ffcc00;
+            color: #000;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        #wish-input-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 20;
+            pointer-events: all;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        #wish-input-container h2 {
+            margin: 0;
+            color: #ffcc00;
+            text-align: center;
+        }
+
+        #wish-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ffcc00;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+            font-family: 'Chonburi', sans-serif;
+            box-sizing: border-box;
+            resize: none;
+        }
+
+        #launch {
+            background-color: #ffcc00;
+            color: #000;
+            border: none;
+            font-size: 1.2em;
+            padding: 10px;
+        }
+
+        #launch:hover {
+            background-color: #fff;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ffcc00;
+            padding: 10px 20px;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            z-index: 30;
+            pointer-events: none;
+            font-size: 1.1em;
+        }
+
+        #toast.show {
+            opacity: 1;
+        }
+
+        /* Mobile Controls Bar (To be hidden on mobile as per user request) */
+        #mobileBar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-sizing: border-box;
+            z-index: 15;
+            pointer-events: all;
+        }
+
+        #mobileBar .btn {
+            flex-grow: 1;
+            margin: 0 5px;
+            text-align: center;
+        }
+
+        /* Hide mobileBar completely on all devices, as the header controls are sufficient */
+        #mobileBar {
+            display: none !important;
+        }
+
+        /* Adjust header for mobile to ensure buttons are visible */
+        @media (max-width: 768px) {
+            .header {
+                padding: 5px;
+            }
+            .header-logo {
+                height: 30px;
+            }
+            .btn {
+                padding: 5px 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
 </head>
 <body>
-<header>
-  <div class="row">
-    <h1>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</h1>
-  </div>
-  <div class="row" style="margin-top:10px">
-    <span class="pill">ลอยแล้ว <strong id="statCount">0</strong> ใบ</span>
-    <button id="headerMusicBtn" class="btn">▶/⏸ เพลง</button>
-    <button id="resetBtn" class="btn bad">🧹 เริ่มนับใหม่</button>
-    <button id="exportBtn" class="btn bad">⬇️ รายงาน CSV</button>
-  </div>
-  <div class="row" style="margin-top:10px">
-    <input id="wish" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ…" style="flex-grow:1;">
-    <button id="headerLaunchBtn" class="btn good">ปล่อย</button>
-  </div>
-</header>
-<div id="stage">
-    <picture>
-      <source media="(max-width:640px)" srcset="images/bg5mb.png">
-      <img id="bgLayer" src="images/bg5.png" alt="background" style="width:auto;">
-    </picture>
-</div>
-<canvas id="scene"></canvas>
-<div id="toast">ปล่อยแล้ว 🎋</div>
-<div id="mobileBar">
-  <button id="tapLaunchMobile" class="btn good">ปล่อยกระทง</button>
-  <button id="tapMusicMobile" class="btn">▶/⏸ เพลง</button>
-</div>
-<audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
-<div id="splash">
-  <div class="card">
-    <h1 style="margin:4px 0 0 0">แตะหน้าจอเพื่อเริ่มลอยกระทง</h1>
-    <p class="muted" style="margin:10px 10px 10px 10px"><span id="loadInfo">กำลังเตรียมฉาก…</span> • หากเพลงไม่ดัง ให้กดปุ่ม ▶ เล่นเพลง</p>
-    <button id="startBtn" class="btn good">เริ่มลอยกระทง</button>
-  </div>
-</div>
-<section style="position:fixed; left:10px; bottom:10px; right:10px; z-index:9; color:#bbccdd; pointer-events:none;">
-  <ul id="wishList"></ul>
-</section>
-<script src="main.js"></script>
+
+    <div id="splash">
+        <img src="logo.png" alt="Loy Krathong Logo" style="width: 150px; height: 150px;">
+        <div id="splash-text">กำลังเตรียมฉาก...</div>
+        <div id="loading-bar">
+            <div id="loading-progress"></div>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="background"></div>
+        <canvas id="canvas"></canvas>
+
+        <div id="ui-container">
+            <div class="header">
+                <div class="header-left">
+                    <img src="logo.png" alt="Loy Krathong Logo" class="header-logo">
+                </div>
+                <div class="header-right">
+                    <button id="btn-launch-header" class="btn">ปล่อยกระทง</button>
+                    <button id="btn-reset" class="btn">เริ่มใหม่</button>
+                    <button id="btn-music" class="btn">เพลง: เปิด</button>
+                    <button id="btn-export" class="btn">ส่งออก CSV</button>
+                </div>
+            </div>
+
+            <div id="wish-input-container">
+                <h2>อธิษฐาน</h2>
+                <textarea id="wish-input" rows="4" placeholder="พิมพ์คำอธิษฐานของคุณที่นี่..."></textarea>
+                <button id="launch" class="btn">ปล่อยกระทง</button>
+            </div>
+
+            <div id="toast"></div>
+
+            <!-- Mobile Bar - Hidden via CSS -->
+            <div id="mobileBar">
+                <button id="btn-launch-mobile" class="btn">ปล่อยกระทง</button>
+                <button id="btn-reset-mobile" class="btn">เริ่มใหม่</button>
+                <button id="btn-music-mobile" class="btn">เพลง: เปิด</button>
+                <button id="btn-export-mobile" class="btn">ส่งออก CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="bg-music" loop></audio>
+
+    <!-- The critical fix: New cache-busting version to force reload -->
+    <script src="main.js?v=20231103_5"></script>
 </body>
 </html>
