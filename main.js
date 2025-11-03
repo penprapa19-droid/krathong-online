@@ -30,13 +30,13 @@ let wishes = [];
 
 // Assets
 const assets = {
-    tuktuk: 'tuktuk.png',
-    song: 'song.mp3',
+    tuktuk: 'images/tuktuk.png', // Corrected path
+    song: 'audio/song.mp3', // Assuming audio is in 'audio/' folder
     krathongs: []
 };
 
 for (let i = 1; i <= KRATHONG_COUNT; i++) {
-    assets.krathongs.push(`kt${i}.png`);
+    assets.krathongs.push(`images/kt${i}.png`); // Corrected path
 }
 
 let loadedAssets = 0;
