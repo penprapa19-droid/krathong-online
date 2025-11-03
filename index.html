@@ -16,7 +16,7 @@
     height:100%; 
     background:#061018; 
     color:#ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   }
   
   header{
@@ -396,7 +396,7 @@
   }
 </style>
 
-<link rel="icon" href="logo.png">
+<link rel="icon" href="images/logo.png">
 </head>
 
 <body>
@@ -438,8 +438,8 @@ referrerpolicy="no-referrer-when-downgrade"></a></div></noscript>
 
 <div id="stage">
     <picture>
-      <source media="(max-width:640px)" srcset="bg5mb.png">
-      <img id="bgLayer" src="bg5.png" alt="background" style="width:auto;">
+      <source media="(max-width:640px)" srcset="images/bg5mb.png">
+      <img id="bgLayer" src="images/bg5.png" alt="background" style="width:auto;">
     </picture>
 </div>
 <canvas id="scene"></canvas>
@@ -448,7 +448,7 @@ referrerpolicy="no-referrer-when-downgrade"></a></div></noscript>
   <button id="tapLaunch" class="btn good" style="display: none;">ปล่อยกระทง</button>
   <button id="tapMusic2" class="btn" style="display: none;">▶/⏸ เพลง</button>
 </div>
-<audio id="bgm" loop preload="auto" src="song.mp3" playsinline></audio>
+<audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
 
 <div id="splash">
   <div class="card">
@@ -462,12 +462,13 @@ referrerpolicy="no-referrer-when-downgrade"></a></div></noscript>
   <ul id="wishList"></ul>
 </section>
 
-<script src="main.js?v=20231104_04"></script>
+<script src="main.js?v=20231104_05"></script>
 <script>
-// Files
-const KRATHONG_SRCS=["kt1.png","kt2.png","kt3.png","kt4.png","kt5.png"];
-const TUK_SRC="tuktuk.png";
-const LOGO_SRC="logo.png";
+// FIXED: Removed canvas declaration to avoid conflict with main.js
+// Files - FIXED: Added images/ prefix
+const KRATHONG_SRCS=["images/kt1.png","images/kt2.png","images/kt3.png","images/kt4.png","images/kt5.png"];
+const TUK_SRC="images/tuktuk.png";
+const LOGO_SRC="images/logo.png";
 
 // Params
 const WATER_PCT=80, DIP_PX=60, WAVES=10, WAVE_AMP=6, WAVE_GAP=16;
@@ -475,21 +476,23 @@ const ROAD_FROM_BOTTOM=185;
 const TUK={w:140,h:90,speed:40};
 
 const bgEl=document.getElementById('bgLayer');
-const canvas=document.getElementById('scene'), ctx=canvas.getContext('2d');
+// FIXED: Removed canvas declaration - it's handled in main.js
 function size(){ 
+  const canvas = document.getElementById('scene');
+  if (!canvas) return;
   const header = document.querySelector('header');
   const headerHeight = header ? header.offsetHeight : 0;
   canvas.width=innerWidth; 
   canvas.height=innerHeight - headerHeight; 
 }
-addEventListener('resize', size); size();
-const waterY=()=> canvas.height*(WATER_PCT/100);
+addEventListener('resize', size); 
+// size() will be called from main.js after canvas is initialized
 
 // Loaders
 function loadImage(src){ return new Promise((res)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); }
 let tukImg=null, logoImg=null, krathongs=[], readyCount=0;
 const totalToLoad=1+1+KRATHONG_SRCS.length;
-function markReady(){ readyCount++; document.getElementById('loadInfo').textContent = `โหลดแล้ว ${readyCount}/${totalToLoad}`; }
+function markReady(){ readyCount++; const el = document.getElementById('loadInfo'); if(el) el.textContent = `โหลดแล้ว ${readyCount}/${totalToLoad}`; }
 (async()=>{
   tukImg = await loadImage(TUK_SRC); markReady();
   logoImg = await loadImage(LOGO_SRC); markReady();
@@ -499,37 +502,54 @@ function markReady(){ readyCount++; document.getElementById('loadInfo').textCont
 // Audio
 const bgm=document.getElementById('bgm');
 function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
-document.getElementById('playBtn').onclick = safePlay;
-document.getElementById('tapMusic').onclick = ()=>{ if(bgm.paused) safePlay(); else bgm.pause(); };
-document.getElementById('stopBtn').onclick = ()=>{ try{ bgm.pause(); }catch{} };
+const playBtn = document.getElementById('playBtn');
+const tapMusic = document.getElementById('tapMusic');
+const stopBtn = document.getElementById('stopBtn');
+if(playBtn) playBtn.onclick = safePlay;
+if(tapMusic) tapMusic.onclick = ()=>{ if(bgm.paused) safePlay(); else bgm.pause(); };
+if(stopBtn) stopBtn.onclick = ()=>{ try{ bgm.pause(); }catch{} };
 
 const splash=document.getElementById('splash');
-function hideSplash(){ if(!splash) return; splash.classList.add('hide'); setTimeout(()=>splash.remove?.(),350); }
-document.getElementById('startBtn').onclick = ()=>{ hideSplash(); safePlay(); };
+function hideSplash(){ if(!splash) return; splash.classList.add('hide'); setTimeout(()=>{ if(splash.remove) splash.remove(); },350); }
+const startBtn = document.getElementById('startBtn');
+if(startBtn) startBtn.onclick = ()=>{ hideSplash(); safePlay(); };
 setTimeout(hideSplash, 1800);
 
 // Wish list / counters / logging for report
 const LS_COUNT="loy.count", LS_WISHES="loy.wishes.queue", LS_SEQ="loy.seq", LS_LOG="loy.wishes.log";
 let total=+(localStorage.getItem(LS_COUNT)||0), seq=+(localStorage.getItem(LS_SEQ)||0);
-document.getElementById('statCount').textContent=total;
-function bump(){ total++; localStorage.setItem(LS_COUNT,total); document.getElementById('statCount').textContent=total; }
+const statCountEl = document.getElementById('statCount');
+if(statCountEl) statCountEl.textContent=total;
+
+function bump(){ total++; localStorage.setItem(LS_COUNT,total); const el = document.getElementById('statCount'); if(el) el.textContent=total; }
 function pushWish(text){ 
   let arr=[]; try{ arr=JSON.parse(localStorage.getItem(LS_WISHES)||"[]"); }catch{}; 
   seq++; localStorage.setItem(LS_SEQ, seq); 
   const item={n:seq,w:text||"",t:Date.now()};
   arr.push(item); localStorage.setItem(LS_WISHES, JSON.stringify(arr)); 
 
-// log สำหรับ report
+  // log สำหรับ report
   let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{};
   log.push(item); localStorage.setItem(LS_LOG, JSON.stringify(log));
   renderWish(); 
 }
-function renderWish(){ const ul=document.getElementById('wishList'); let arr=[]; try{ arr=JSON.parse(localStorage.getItem(LS_WISHES)||"[]"); }catch{}; const view=arr.slice(-6); ul.innerHTML=view.map(x=>`<li><span class="num">คนที่ ${x.n}</span>🕯️ ${escapeHtml(x.w)}</li>`).join(""); }
+
+function renderWish(){ 
+  const ul=document.getElementById('wishList'); 
+  if(!ul) return;
+  let arr=[]; 
+  try{ arr=JSON.parse(localStorage.getItem(LS_WISHES)||"[]"); }catch{}; 
+  const view=arr.slice(-6); 
+  ul.innerHTML=view.map(x=>`<li><span class="num">คนที่ ${x.n}</span>🕯️ ${escapeHtml(x.w)}</li>`).join(""); 
+}
+
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));}
 renderWish();
 
 // Export CSV
-document.getElementById('exportBtn').onclick=()=>{
+const exportBtn = document.getElementById('exportBtn');
+const exportStat = document.getElementById('exportStat');
+const exportFunc = ()=>{
   let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{}
   const rows=[["seq","timestamp","ISO","wish"]];
   for(const x of log){ const iso=new Date(x.t||Date.now()).toISOString(); rows.push([x.n, x.t, iso, (x.w||"").replace(/"/g,'""')]); }
@@ -538,30 +558,38 @@ document.getElementById('exportBtn').onclick=()=>{
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a"); a.href=url; a.download="loykrathong_report.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
-
-// Export Stat (same as exportBtn)
-document.getElementById('exportStat').onclick=document.getElementById('exportBtn').onclick;
+if(exportBtn) exportBtn.onclick = exportFunc;
+if(exportStat) exportStat.onclick = exportFunc;
 
 // Reset
-document.getElementById('resetBtn').onclick=()=>{
+const resetBtn = document.getElementById('resetBtn');
+if(resetBtn) resetBtn.onclick=()=>{
   if(confirm("ยืนยันเริ่มนับใหม่และลบคำอธิษฐานทั้งหมด?")){
     localStorage.removeItem(LS_COUNT);
     localStorage.removeItem(LS_WISHES);
     localStorage.removeItem(LS_SEQ);
     localStorage.removeItem(LS_LOG);
     total=0; seq=0;
-    document.getElementById('statCount').textContent=total;
+    const el = document.getElementById('statCount');
+    if(el) el.textContent=total;
     renderWish();
   }
 };
 
 // Launch
-document.getElementById('launch').onclick=()=>{
-  const w=document.getElementById('wish').value.trim();
+const launchBtn = document.getElementById('launch');
+const wishInput = document.getElementById('wish');
+if(launchBtn) launchBtn.onclick=()=>{
+  if(!wishInput) return;
+  const w=wishInput.value.trim();
   if(!w){ alert("กรุณาพิมพ์คำอธิษฐาน"); return; }
   bump(); pushWish(w);
-  document.getElementById('wish').value="";
-  const t=document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000);
+  wishInput.value="";
+  const t=document.getElementById('toast'); 
+  if(t) {
+    t.classList.add('show'); 
+    setTimeout(()=>t.classList.remove('show'),2000);
+  }
 };
 </script>
 </body>
