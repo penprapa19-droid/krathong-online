@@ -6,6 +6,10 @@ const ASSETS = [
   'images/kt1.png','images/kt2.png','images/kt3.png','images/kt4.png','images/kt5.png',
   'images/tuktuk.png','images/logo.png',
   'images/icon-192.png','images/icon-512.png',
+  'audio/song.mp3',
+  'main.js?v=5'p3',
+  'main.js?v=5'p3',
+  'main.js?v=5'p3',
   'main.js?v=5'
 ];
 
