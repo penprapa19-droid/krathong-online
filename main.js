@@ -180,7 +180,7 @@ function loop(ts) {
     const ordered = boats.slice().sort((a, b) => a.y - b.y);
     for (const b of ordered) { b.update(dt); b.draw(ctx); }
     fireworks = fireworks.filter(fw => fw.parts.length > 0 || fw.state === 'rise');
-    
+    requestAnimationFrame(loop);
 }
 
 /* ===== DOMContentLoaded: Main Entry Point ===== */
@@ -304,5 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(spawnTriple, 10000);
 
     // Start the animation loop
-    
+    requestAnimationFrame(loop);
+
 });
