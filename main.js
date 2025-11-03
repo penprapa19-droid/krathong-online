@@ -7,7 +7,7 @@
 
 /* ===== Configuration & Constants ===== */
 const VQS = "?v=12.4"; // Version Query String for cache busting
-const WATER_FACTOR = 0.80;   // Water surface height as a fraction of canvas height
+const WATER_FACTOR = 0.90;   // Water surface height as a fraction of canvas height (Adjusted from 0.80 to 0.90)
 const ROAD_DY      = 0;      // Road position relative to water surface (0 means road is at water level)
 const LANES        = 5;      // Number of krathong lanes
 const LANE_STEP    = 16;     // Vertical distance between lanes
@@ -57,7 +57,7 @@ size();
 
 const waterY = () => Math.round(cvs.height * WATER_FACTOR);
 const roadY  = () => waterY() + ROAD_DY;
-function laneY(i){ return waterY() + 22 + i*LANE_STEP; }
+function laneY(i){ return waterY() + 10 + i*LANE_STEP; }
 
 /* ===== Statistics (localStorage) ===== */
 const LS_COUNT="loy.count", LS_WQ="loy.wishes.queue", LS_SEQ="loy.seq", LS_LOG="loy.wishes.log";
@@ -264,7 +264,7 @@ setInterval(spawnTriple,10000); // Recurring bursts
 // Since we set object-fit: cover and object-position: center bottom,
 // the bottom of the image aligns with the bottom of the stage.
 // We will use a fixed offset from the bottom of the canvas for the road.
-const ROAD_OFFSET_FROM_BOTTOM = 185; // Based on original value
+const ROAD_OFFSET_FROM_BOTTOM = 100; // Based on original value (Adjusted from 185 to 100)
 
 function roadYFromBackground(){
   // Calculate the road Y position relative to the canvas bottom
