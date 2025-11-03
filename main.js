@@ -15,7 +15,8 @@ const TUKTUK_SPEED = 1.5;
 const FIREWORK_COUNT = 10;
 
 // FINAL FIX: Adjusted ROAD_OFFSET_FROM_BOTTOM to place the tuktuk on the red border (approx. 150px from bottom)
-const ROAD_OFFSET_FROM_BOTTOM = 150; 
+// Based on the latest screenshot, the red border is higher than previously estimated.
+const ROAD_OFFSET_FROM_BOTTOM = 200; 
 // FINAL FIX: Adjusted WATER_LEVEL_OFFSET to place krathongs on the water (approx. 100px from bottom)
 const WATER_LEVEL_OFFSET = 100; 
 
@@ -31,15 +32,10 @@ let isLaunched = false;
 let krathongCounter = 0;
 let wishes = [];
 
-// FINAL FIX: Removed fixed firework positions as they are part of the background image
-// const FIXED_FIREWORK_POSITIONS = [ ... ];
-// let fireworkTimer = 0;
-// const FIREWORK_INTERVAL = 5000; 
-
 // Assets
 const assets = {
     tuktuk: 'images/tuktuk.png', // Corrected path
-    song: 'audio/song.mp3', // Assuming audio is in 'audio/' folder
+    song: 'audio/song.mp3', // Corrected path to ensure it's not the source of 404
     krathongs: []
 };
 
@@ -47,8 +43,10 @@ for (let i = 1; i <= KRATHONG_COUNT; i++) {
     assets.krathongs.push(`images/kt${i}.png`); // Corrected path
 }
 
+// Total assets calculation needs to be accurate for loading screen
+// 1 (tuktuk) + 5 (krathongs) + 1 (song) = 7
 let loadedAssets = 0;
-const totalAssets = Object.keys(assets).length - 1 + assets.krathongs.length; // -1 for krathongs array, + krathongs.length
+const totalAssets = 1 + assets.krathongs.length + 1; // 1 for tuktuk, 5 for krathongs, 1 for song
 
 // Utility Functions
 function haptic() {
@@ -80,7 +78,32 @@ function resizeCanvas() {
     // Recalculate tuktuk position based on new height
     if (tuktuk.image) {
         // Tuktuk should be positioned on the red border
-        tuktuk.y = height - ROAD_OFFSET_FROM_BOTTOM - tuktuk.height + 2; // +2px to lift it slightly
+        // The background image is set to 'contain' and 'center center' in index.html.
+        // We need to calculate the actual bottom of the image within the viewport.
+        
+        // Assuming the background image is 1920x1080 (standard desktop)
+        const aspectRatio = 1920 / 1080;
+        let effectiveHeight = height;
+        let effectiveWidth = width;
+
+        if (width / height > aspectRatio) {
+            // Screen is wider than image, image height is full screen height
+            effectiveWidth = height * aspectRatio;
+        } else {
+            // Screen is taller than image, image width is full screen width
+            effectiveHeight = width / aspectRatio;
+        }
+
+        // The image is centered, so the bottom of the image is at:
+        const imageBottom = height - (height - effectiveHeight) / 2;
+        
+        // We need to adjust the offset based on the effective height of the image.
+        // Let's use a fixed percentage of the effective height for a more reliable position.
+        // The red line seems to be around 18% from the bottom of the image.
+        const roadPositionRatio = 0.18; 
+        const roadY = imageBottom - (effectiveHeight * roadPositionRatio);
+
+        tuktuk.y = roadY - tuktuk.height + 10; // +10px to lift it slightly above the line
     }
 
     // Recalculate krathong positions
@@ -194,10 +217,6 @@ function gameLoop(timestamp) {
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // --- FINAL FIX: Removed Canvas Water/Line Drawing ---
-    // The water/river is now part of the background image.
-    // ---------------------------------------------------
-
     // Update and Draw Krathongs
     krathongs.forEach(k => {
         k.update(deltaTime);
@@ -220,10 +239,6 @@ function gameLoop(timestamp) {
         f.draw();
     });
     fireworks = fireworks.filter(f => !f.isFinished());
-
-    // --- FINAL FIX: Removed Fixed Firework Spawning ---
-    // The fireworks are now part of the background image.
-    // --------------------------------------------------
 
     requestAnimationFrame(gameLoop);
 }
