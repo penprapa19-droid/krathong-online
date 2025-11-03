@@ -13,30 +13,28 @@ const KRATHONG_SPACING = 150; // Increased spacing for better visual separation
 const KRATHONG_SPEED = 0.5;
 const TUKTUK_SPEED = 1.5;
 const FIREWORK_COUNT = 10;
-// Adjusted ROAD_OFFSET_FROM_BOTTOM to lift the tuktuk above the red area
-const ROAD_OFFSET_FROM_BOTTOM = 250; // Further adjusted to be above the red area (approx. 250px from bottom)
-const WATER_LEVEL_OFFSET = 100; // Adjusted water level to be lower (approx. 100px from bottom)
+
+// FINAL FIX: Adjusted ROAD_OFFSET_FROM_BOTTOM to place the tuktuk on the red border (approx. 150px from bottom)
+const ROAD_OFFSET_FROM_BOTTOM = 150; 
+// FINAL FIX: Adjusted WATER_LEVEL_OFFSET to place krathongs on the water (approx. 100px from bottom)
+const WATER_LEVEL_OFFSET = 100; 
 
 // Global Variables
 let canvas, ctx;
 let width, height;
 let krathongs = [];
 let tuktuk = { x: -100, y: 0, image: null, width: 150, height: 100 };
-let fireworks = [];
+let fireworks = []; // Keep for potential future use, but won't be spawned in gameLoop
 let lastTime = 0;
 let isMusicPlaying = false;
 let isLaunched = false;
 let krathongCounter = 0;
 let wishes = [];
 
-// Fixed firework positions (normalized to 0-1000 for responsive calculation)
-const FIXED_FIREWORK_POSITIONS = [
-    { x: 200, y: 200 }, // Left
-    { x: 500, y: 100 }, // Center
-    { x: 800, y: 200 }  // Right
-];
-let fireworkTimer = 0;
-const FIREWORK_INTERVAL = 5000; // 5 seconds between fixed firework bursts
+// FINAL FIX: Removed fixed firework positions as they are part of the background image
+// const FIXED_FIREWORK_POSITIONS = [ ... ];
+// let fireworkTimer = 0;
+// const FIREWORK_INTERVAL = 5000; 
 
 // Assets
 const assets = {
@@ -81,7 +79,7 @@ function resizeCanvas() {
 
     // Recalculate tuktuk position based on new height
     if (tuktuk.image) {
-        // Tuktuk should be positioned on the road, which is above the water line
+        // Tuktuk should be positioned on the red border
         tuktuk.y = height - ROAD_OFFSET_FROM_BOTTOM - tuktuk.height + 2; // +2px to lift it slightly
     }
 
@@ -100,7 +98,7 @@ class Krathong {
         this.wish = wish;
         this.width = 80;
         this.height = 80;
-        this.x = -this.width - (id * KRATHONG_SPACING); // Start off-screen LEFT (Issue 5)
+        this.x = -this.width - (id * KRATHONG_SPACING); // Start off-screen LEFT
         this.y = height - WATER_LEVEL_OFFSET - this.height / 2; // Position in the water
         this.speed = KRATHONG_SPEED + (Math.random() * 0.2 - 0.1); // Slight speed variation
         this.waveOffset = Math.random() * Math.PI * 2; // Start at random point in wave cycle
@@ -108,7 +106,7 @@ class Krathong {
 
     update(deltaTime) {
         if (isLaunched) {
-            this.x += this.speed * deltaTime * 0.01; // Move from LEFT to RIGHT (Issue 5)
+            this.x += this.speed * deltaTime * 0.01; // Move from LEFT to RIGHT
             // Simple wave motion
             this.y = height - WATER_LEVEL_OFFSET - this.height / 2 + Math.sin(this.waveOffset + this.x * 0.01) * 5;
             
@@ -126,7 +124,7 @@ class Krathong {
     }
 }
 
-// Firework Class
+// Firework Class (Kept for structure, but spawning is removed from gameLoop)
 class Firework {
     constructor(x, y, isFixed = false) {
         this.x = x;
@@ -141,7 +139,6 @@ class Firework {
     }
 
     createParticles() {
-        // For fixed fireworks, make them a bit more spectacular
         const particleCount = this.isFixed ? 80 : 50;
         for (let i = 0; i < particleCount; i++) {
             this.particles.push({
@@ -197,23 +194,9 @@ function gameLoop(timestamp) {
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // --- Draw Water Line and Water Area (Issue 3 Fix) ---
-    // The water line is now positioned relative to the bottom using a fixed offset
-    const waterLevel = height - WATER_LEVEL_OFFSET;
-    
-    // Draw water area
-    ctx.fillStyle = 'rgba(0, 0, 100, 0.3)';
-    ctx.fillRect(0, waterLevel, width, WATER_LEVEL_OFFSET);
-
-    // Draw water line (a simple blue line)
-    ctx.strokeStyle = 'rgba(0, 150, 255, 0.8)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, waterLevel);
-    ctx.lineTo(width, waterLevel);
-    ctx.stroke();
-    // --------------------------------------
-
+    // --- FINAL FIX: Removed Canvas Water/Line Drawing ---
+    // The water/river is now part of the background image.
+    // ---------------------------------------------------
 
     // Update and Draw Krathongs
     krathongs.forEach(k => {
@@ -221,7 +204,7 @@ function gameLoop(timestamp) {
         k.draw();
     });
 
-    // Update and Draw TukTuk (Issue 4 Fix: Position adjusted in resizeCanvas and constants)
+    // Update and Draw TukTuk (Position adjusted in resizeCanvas and constants)
     if (tuktuk.image) {
         if (tuktuk.x < width + tuktuk.width) {
             tuktuk.x += TUKTUK_SPEED * deltaTime * 0.01;
@@ -238,18 +221,9 @@ function gameLoop(timestamp) {
     });
     fireworks = fireworks.filter(f => !f.isFinished());
 
-    // --- Fixed Firework Spawning (Issue 2 Fix) ---
-    fireworkTimer += deltaTime;
-    if (fireworkTimer > FIREWORK_INTERVAL) {
-        fireworkTimer = 0;
-        FIXED_FIREWORK_POSITIONS.forEach(pos => {
-            // Convert normalized position (0-1000) to actual screen coordinates
-            const x = (pos.x / 1000) * width;
-            const y = (pos.y / 1000) * height;
-            fireworks.push(new Firework(x, y, true));
-        });
-    }
-    // ---------------------------------------------
+    // --- FINAL FIX: Removed Fixed Firework Spawning ---
+    // The fireworks are now part of the background image.
+    // --------------------------------------------------
 
     requestAnimationFrame(gameLoop);
 }
@@ -285,11 +259,6 @@ function loadAssets() {
     
     // Pre-initialize krathongs array with loaded images
     for (let i = 0; i < KRATHONG_COUNT; i++) {
-        // Ensure the image is loaded before creating the Krathong object
-        // This is a bit tricky with async loading, but since we wait for all assets,
-        // we can rely on the images being in the DOM or fully loaded by initGame.
-        // For now, we will create the Krathong objects with the image objects.
-        // The image objects will be updated when they finish loading.
         const img = new Image();
         img.onload = assetLoaded;
         img.src = assets.krathongs[i];
@@ -330,170 +299,179 @@ function launch(wish) {
         wishInputContainer.style.display = 'none';
     }
 
-    // Find the next krathong image to use
-    const krathongImage = krathongs[krathongCounter % KRATHONG_COUNT].image;
-    
-    // Create a new krathong with the wish
-    const newKrathong = new Krathong(krathongs.length, krathongImage, wish);
-    newKrathong.x = -newKrathong.width; // Start off-screen left
-    krathongs.push(newKrathong);
-    krathongCounter++;
-    wishes.push({ id: newKrathong.id, wish: wish, timestamp: new Date().toISOString() });
-
-    isLaunched = true;
-
-    // Play music if not playing
-    const musicEl = document.getElementById('bg-music');
-    if (musicEl && !isMusicPlaying) {
-        musicEl.play().then(() => {
-            isMusicPlaying = true;
-            updateMusicButton();
-        }).catch(error => {
-            console.error("Music playback failed:", error);
-        });
+    if (!isLaunched) {
+        isLaunched = true;
     }
-}
 
-function resetGame() {
-    // Reset krathongs to only the initial 5 placeholders
-    krathongs = krathongs.slice(0, KRATHONG_COUNT);
-    // Reset positions of initial krathongs to off-screen left
-    krathongs.forEach((k, index) => {
-        k.x = -k.width - (index * KRATHONG_SPACING);
-        k.y = height - WATER_LEVEL_OFFSET - k.height / 2;
-    });
-    
-    wishes = [];
-    krathongCounter = 0;
-    tuktuk.x = -tuktuk.width;
-    isLaunched = false;
-    fireworks = [];
-    haptic();
-}
-
-function toggleMusic() {
-    const musicEl = document.getElementById('bg-music');
-    if (musicEl) {
-        if (isMusicPlaying) {
-            musicEl.pause();
-        } else {
-            musicEl.play().catch(error => {
-                console.error("Music playback failed:", error);
-            });
+    // Find the next krathong to launch
+    const krathongToLaunch = krathongs.find(k => k.wish === '');
+    if (krathongToLaunch) {
+        krathongToLaunch.wish = wish;
+        krathongCounter++;
+        wishes.push({ id: krathongCounter, wish: wish, timestamp: new Date().toISOString() });
+        
+        // Reset position to start off-screen left
+        krathongToLaunch.x = -krathongToLaunch.width;
+        
+        // Update counter
+        const counterEl = document.getElementById('krathong-counter');
+        if (counterEl) {
+            counterEl.textContent = `ลอยแล้ว ${krathongCounter} ใบ`;
         }
-        isMusicPlaying = !isMusicPlaying;
-        updateMusicButton();
+        
+        showToast();
+        haptic();
+    } else {
+        // All krathongs are launched, find the oldest one to replace
+        const oldestKrathong = krathongs.reduce((prev, current) => (prev.id < current.id) ? prev : current);
+        oldestKrathong.wish = wish;
+        oldestKrathong.id = krathongCounter++;
+        
+        // Reset position to start off-screen left
+        oldestKrathong.x = -oldestKrathong.width;
+        
+        wishes.push({ id: oldestKrathong.id, wish: wish, timestamp: new Date().toISOString() });
+        showToast();
         haptic();
     }
 }
 
-function updateMusicButton() {
+function resetGame() {
+    isLaunched = false;
+    krathongCounter = 0;
+    wishes = [];
+    
+    // Reset krathong positions and wishes
+    krathongs.forEach((k, index) => {
+        k.id = index;
+        k.wish = '';
+        k.x = -k.width - (index * KRATHONG_SPACING);
+    });
+    
+    // Reset tuktuk position
+    tuktuk.x = -tuktuk.width;
+    
+    // Update counter
+    const counterEl = document.getElementById('krathong-counter');
+    if (counterEl) {
+        counterEl.textContent = `ลอยแล้ว 0 ใบ`;
+    }
+    
+    // Clear wish input
+    const wishInput = document.getElementById('wish-input');
+    if (wishInput) {
+        wishInput.value = '';
+    }
+}
+
+function toggleMusic() {
+    const musicEl = document.getElementById('bg-music');
     const btnMusic = document.getElementById('btn-music');
-    if (btnMusic) {
-        btnMusic.textContent = `เพลง: ${isMusicPlaying ? 'ปิด' : 'เปิด'}`;
+    const btnMusicMobile = document.getElementById('btn-music-mobile');
+
+    if (musicEl) {
+        if (isMusicPlaying) {
+            musicEl.pause();
+            isMusicPlaying = false;
+            if (btnMusic) btnMusic.textContent = 'เพลง: ปิด';
+            if (btnMusicMobile) btnMusicMobile.textContent = 'เพลง: ปิด';
+        } else {
+            musicEl.play().catch(error => {
+                console.error("Music playback failed:", error);
+                // Inform user that music requires interaction
+                alert("เบราว์เซอร์ของคุณอาจต้องการให้คุณคลิกที่หน้าจอเพื่อเปิดเพลง");
+            });
+            isMusicPlaying = true;
+            if (btnMusic) btnMusic.textContent = 'เพลง: เปิด';
+            if (btnMusicMobile) btnMusicMobile.textContent = 'เพลง: เปิด';
+        }
     }
 }
 
 function exportCSV() {
     if (wishes.length === 0) {
-        alert('ยังไม่มีคำอธิษฐานที่ถูกปล่อย');
+        alert("ยังไม่มีคำอธิษฐานที่ถูกบันทึก");
         return;
     }
 
     let csvContent = "data:text/csv;charset=utf-8,ID,Wish,Timestamp\n";
     wishes.forEach(w => {
-        // Simple CSV escaping for wishes
-        const escapedWish = w.wish.replace(/"/g, '""');
-        csvContent += `${w.id},"${escapedWish}",${w.timestamp}\n`;
+        // Escape quotes and newlines in the wish text
+        const wishText = `"${w.wish.replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+        csvContent += `${w.id},${wishText},${w.timestamp}\n`;
     });
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "loy_krathong_wishes.csv");
+    link.setAttribute("download", "krathong_wishes.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    haptic();
 }
 
-/* ===== DOMContentLoaded: Main Entry Point ===== */
+// Main function to run when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     canvas = document.getElementById(CANVAS_ID);
     if (canvas) {
         ctx = canvas.getContext('2d');
     }
 
-    // Get DOM elements
-    const wishEl = document.getElementById('wish-input');
-    const wishInputContainer = document.getElementById('wish-input-container');
-
-    // Launch button (inside wish-input-container)
-    const launchEl = document.getElementById('launch');
-    if (launchEl) {
-        launchEl.onclick = () => {
-            launch(wishEl ? wishEl.value || "" : "");
-            if (wishEl) wishEl.value = "";
-            showToast();
-            haptic();
-        };
-    }
-
-    // Header buttons
-    const btnLaunchHeader = document.getElementById('btn-launch-header');
-    if (btnLaunchHeader) {
-        btnLaunchHeader.onclick = () => {
-            if (wishInputContainer) {
-                wishInputContainer.style.display = 'flex';
-            }
-            haptic();
-        };
-    }
-
-    const btnReset = document.getElementById('btn-reset');
-    if (btnReset) {
-        btnReset.onclick = resetGame;
-    }
-
-    const btnMusic = document.getElementById('btn-music');
-    if (btnMusic) {
-        btnMusic.onclick = toggleMusic;
-    }
-
-    const btnExport = document.getElementById('btn-export');
-    if (btnExport) {
-        btnExport.onclick = exportCSV;
-    }
-
-    // Mobile Bar buttons (redundant but kept for completeness, though mobileBar is hidden by CSS)
-    const btnLaunchMobile = document.getElementById('btn-launch-mobile');
-    if (btnLaunchMobile) {
-        btnLaunchMobile.onclick = () => {
-            if (wishInputContainer) {
-                wishInputContainer.style.display = 'flex';
-            }
-            haptic();
-        };
-    }
-
-    const btnResetMobile = document.getElementById('btn-reset-mobile');
-    if (btnResetMobile) {
-        btnResetMobile.onclick = resetGame;
-    }
-
-    const btnMusicMobile = document.getElementById('btn-music-mobile');
-    if (btnMusicMobile) {
-        btnMusicMobile.onclick = toggleMusic;
-    }
-
-    const btnExportMobile = document.getElementById('btn-export-mobile');
-    if (btnExportMobile) {
-        btnExportMobile.onclick = exportCSV;
-    }
-
-    // Initial music button state
-    updateMusicButton();
-
-    // Start loading assets
+    // Load assets and initialize game
     loadAssets();
+
+    // Event Listeners for UI
+    const btnLaunchHeader = document.getElementById('btn-launch-header');
+    const btnLaunchMobile = document.getElementById('btn-launch-mobile');
+    const btnReset = document.getElementById('btn-reset');
+    const btnResetMobile = document.getElementById('btn-reset-mobile');
+    const btnMusic = document.getElementById('btn-music');
+    const btnMusicMobile = document.getElementById('btn-music-mobile');
+    const btnExport = document.getElementById('btn-export');
+    const btnExportMobile = document.getElementById('btn-export-mobile');
+    const launchButton = document.getElementById('launch');
+    const wishInputContainer = document.getElementById('wish-input-container');
+    const wishInput = document.getElementById('wish-input');
+
+    // Helper function to show wish input
+    const showWishInput = () => {
+        if (wishInputContainer) {
+            wishInputContainer.style.display = 'flex';
+            if (wishInput) {
+                wishInput.focus();
+            }
+        }
+    };
+
+    // Helper function to handle launch button click
+    const handleLaunchClick = () => {
+        if (wishInput && wishInput.value.trim() !== '') {
+            launch(wishInput.value.trim());
+            wishInput.value = ''; // Clear input after launch
+        } else {
+            alert("กรุณาพิมพ์คำอธิษฐานก่อนปล่อยกระทง");
+        }
+    };
+
+    if (btnLaunchHeader) btnLaunchHeader.onclick = showWishInput;
+    if (btnLaunchMobile) btnLaunchMobile.onclick = showWishInput;
+    if (btnReset) btnReset.onclick = resetGame;
+    if (btnResetMobile) btnResetMobile.onclick = resetGame;
+    if (btnMusic) btnMusic.onclick = toggleMusic;
+    if (btnMusicMobile) btnMusicMobile.onclick = toggleMusic;
+    if (btnExport) btnExport.onclick = exportCSV;
+    if (btnExportMobile) btnExportMobile.onclick = exportCSV;
+    if (launchButton) launchButton.onclick = handleLaunchClick;
+
+    // Close wish input when clicking outside (simple way)
+    document.addEventListener('click', (event) => {
+        if (wishInputContainer && event.target !== wishInputContainer && !wishInputContainer.contains(event.target) && event.target !== btnLaunchHeader && event.target !== btnLaunchMobile) {
+            if (wishInputContainer.style.display === 'flex') {
+                // Only hide if the click was not on the launch buttons
+                if (event.target.id !== 'btn-launch-header' && event.target.id !== 'btn-launch-mobile') {
+                    wishInputContainer.style.display = 'none';
+                }
+            }
+        }
+    });
 });
