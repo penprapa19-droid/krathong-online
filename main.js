@@ -112,7 +112,7 @@ class Krathong{
     this.img=img; this.text=text||"";
     this.size=KR_SIZE;
     this.lane=nextKrathongIndex % LANES; // Assign a lane
-    this.x=-120; this.vx=rnd(18,24); // Slightly slower speed for better spacing
+    this.x=-120; this.vx=rnd(16,22); // Slightly slower speed for better spacing
     this.phase=rnd(0,Math.PI*2); this.amp=2.2; this.freq=.9+rnd(0,.5); this.t=0;
     this.y=this.computeY(0);
   }
@@ -122,7 +122,7 @@ class Krathong{
   }
   update(dt){
     this.x+=this.vx*dt;
-    if(this.x>cvs.width+160) this.x=-160 - rnd(0,250); // Increased random offset for better spacing
+    if(this.x>cvs.width+160) this.x=-160 - rnd(0,400); // Further increased random offset for better spacing
     this.t+=dt;
     this.y=this.computeY(this.t);
   }
@@ -164,7 +164,7 @@ const boats=[];
 for(let i=0; i<LANES; i++){
   const im=krImgs[i % krImgs.length];
   boats.push(new Krathong(im, ""));
-  boats[i].x = -180 - i*120; // Stagger initial positions
+  boats[i].x = -180 - i*200; // Increased initial stagger for better spacing
   nextKrathongIndex++;
 }
 
@@ -206,8 +206,14 @@ cvs.addEventListener('touchstart', ()=>{ launch(""); showToast(); haptic(); }, {
 /* ===== Music Control ===== */
 function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
 
-// Play/Pause button
+// Play/Pause button (Mobile)
 const tapMusicMobile = document.getElementById('tapMusicMobile'); if(tapMusicMobile) tapMusicMobile.onclick = ()=>{
+  if(bgm.paused) safePlay(); else bgm.pause();
+};
+
+// Play/Pause button (Desktop)
+const tapMusicDesktop = document.getElementById('headerMusicBtn');
+if(tapMusicDesktop) tapMusicDesktop.onclick = ()=>{
   if(bgm.paused) safePlay(); else bgm.pause();
 };
 
