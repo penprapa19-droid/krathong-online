@@ -12,7 +12,7 @@ const KRATHONG_COUNT = 5;
 // FINAL FIX: Increased spacing to prevent krathongs from colliding
 const KRATHONG_SPACING = 300; 
 // FINAL FIX: Increased KRATHONG_SPEED slightly (from 0.5 to 0.7)
-const KRATHONG_SPEED = 1.0; // Increased speed again as requested
+const KRATHONG_SPEED = 1.5; // FINAL FIX: Increased speed again as requested (1.5)
 // FINAL FIX: Increased TUKTUK_SPEED significantly (from 1.5 to 4.0) to meet the user's request for a faster speed (40)
 const TUKTUK_SPEED = 4.0; 
 const FIREWORK_COUNT = 10;
@@ -26,6 +26,7 @@ const WATER_LEVEL_OFFSET = 100;
 let canvas, ctx;
 let width, height;
 let krathongs = [];
+let waterLevel = 0; // FINAL FIX: Global variable for precise water level calculation
 let tuktuk = { x: -100, y: 0, image: null, width: 150, height: 100 };
 let fireworks = []; 
 let lastTime = 0;
@@ -48,7 +49,7 @@ const assets = {
     tuktuk: 'images/tuktuk.png', 
     song: 'audio/song.mp3', 
     // FINAL FIX: Using a known existing asset to prevent 404 and InvalidStateError
-    fireworkLogo: 'images/logo.png', 
+    fireworkLogo: 'images/no-smoking.png', // FINAL FIX: Changed to no-smoking.png as requested by user in previous context
     krathongs: []
 };
 
@@ -88,33 +89,55 @@ function resizeCanvas() {
 
     // Recalculate tuktuk position based on new height
     if (tuktuk.image) {
-        // Tuktuk should be positioned on the red border
-        // The background image is set to 'contain' and 'center center' in index.html.
-        const aspectRatio = 1920 / 1080;
-        let effectiveHeight = height;
-        let effectiveWidth = width;
+        // FINAL FIX: Precise calculation for 'contain' background-size responsiveness
+        const bgWidth = 1920;
+        const bgHeight = 1080;
+        const bgAspectRatio = bgWidth / bgHeight;
 
-        if (width / height > aspectRatio) {
-            effectiveWidth = height * aspectRatio;
+        let effectiveWidth, effectiveHeight, xOffset, yOffset;
+
+        if (width / height > bgAspectRatio) {
+            // Screen is wider than image aspect ratio (black bars on left/right)
+            effectiveHeight = height;
+            effectiveWidth = height * bgAspectRatio;
+            xOffset = (width - effectiveWidth) / 2;
+            yOffset = 0;
         } else {
-            effectiveHeight = width / aspectRatio;
+            // Screen is taller than image aspect ratio (black bars on top/bottom)
+            effectiveWidth = width;
+            effectiveHeight = width / bgAspectRatio;
+            xOffset = 0;
+            yOffset = (height - effectiveHeight) / 2;
         }
 
-        const imageBottom = height - (height - effectiveHeight) / 2;
+        // The red line is at 82% of the image height from the top (18% from the bottom)
+        const roadPositionRatio = 0.82; 
+        const roadYInImage = bgHeight * roadPositionRatio;
         
-        // The red line seems to be around 18% from the bottom of the image.
-    const roadPositionRatio = 0.18; 
-    const roadY = imageBottom - (effectiveHeight * roadPositionRatio);
+        // Convert image coordinate to screen coordinate
+        const scaleFactor = effectiveHeight / bgHeight;
+        const roadYScreen = yOffset + (roadYInImage * scaleFactor);
 
-    // FINAL FIX: Adjusting the vertical position of the tuktuk to run on the red line (Fine-tuned to match reference)
-    tuktuk.y = roadY - tuktuk.height + 10; // Adjusted to +10 to lower the tuktuk slightly more for better alignment
+        // FINAL FIX: Adjusting the vertical position of the tuktuk to run on the red line
+        // The tuktuk image should be placed so its bottom edge is on the road line.
+        tuktuk.y = roadYScreen - tuktuk.height + 10; // +10 for fine-tuning the alignment
+        
+        // Recalculate water level based on the new precise calculation
+        // Water level is at 90% of the image height from the top (10% from the bottom)
+        const waterPositionRatio = 0.90;
+        const waterYInImage = bgHeight * waterPositionRatio;
+        const waterYScreen = yOffset + (waterYInImage * scaleFactor);
+        
+        // Store the calculated water level for krathong positioning and wave drawing
+        // This is the Y-coordinate where the water surface starts
+        waterLevel = waterYScreen;
+        
+        // Update krathong positions based on the new water level
+        krathongs.forEach(k => {
+            // Krathongs should be positioned at the water level
+            k.y = waterLevel - k.height / 2;
+        });
     }
-
-    // Recalculate krathong positions
-    krathongs.forEach(k => {
-        // Krathongs should be positioned at the water level
-        k.y = height - WATER_LEVEL_OFFSET - k.height / 2;
-    });
 }
 
 // Krathong Class
@@ -126,7 +149,7 @@ class Krathong {
         this.width = 80;
         this.height = 80;
         this.x = -this.width - (id * KRATHONG_SPACING); // Start off-screen LEFT
-        this.y = height - WATER_LEVEL_OFFSET - this.height / 2; // Position in the water
+        this.y = waterLevel - this.height / 2; // Position in the water (using global waterLevel)
         this.speed = KRATHONG_SPEED + (Math.random() * 0.2 - 0.1); // Slight speed variation
         this.waveOffset = Math.random() * Math.PI * 2; // Start at random point in wave cycle
     }
@@ -135,7 +158,7 @@ class Krathong {
         if (isLaunched) {
             this.x += this.speed * deltaTime * 0.01; // Move from LEFT to RIGHT
             // Simple wave motion
-            this.y = height - WATER_LEVEL_OFFSET - this.height / 2 + Math.sin(this.waveOffset + this.x * 0.01) * 5;
+            this.y = waterLevel - this.height / 2 + Math.sin(this.waveOffset + this.x * 0.01) * 5; // Use global waterLevel
             
             // Loop krathong when it goes off-screen right
             if (this.x > width) {
@@ -304,7 +327,7 @@ function gameLoop(timestamp) {
 
     // FINAL FIX: Re-introducing water line drawing
     // FINAL FIX: Re-introducing water line drawing
-    drawWaterLines();
+    drawWaterWaves(deltaTime); // Renamed to drawWaterWaves for clarity and to use deltaTime
 
     // Update and Draw Krathongs
     krathongs.forEach(k => {
@@ -345,11 +368,11 @@ function gameLoop(timestamp) {
 }
 
 // FINAL FIX: Re-introducing water line drawing function with more lines and slower speed
-function drawWaterLines() {
-    const waterLevel = height - WATER_LEVEL_OFFSET;
+function drawWaterWaves(deltaTime) {
+    // The waterLevel is now calculated precisely in resizeCanvas()
     const waveHeight = 15; // FINAL FIX: Increased wave height for more visible waves (Visual match to reference)
     const waveLength = 80; // FINAL FIX: Increased wave length for smoother waves (Visual match to reference)
-    const time = Date.now() * 0.0003; // FINAL FIX: Even Slower speed (Visual match to reference)
+    const time = lastTime * 0.0003; // FINAL FIX: Even Slower speed (Visual match to reference)
 
     // FINAL FIX: Darker, thicker lines for a more prominent water effect (Visual match to reference)
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)'; // Darker color for lines on light background (Visual match to reference)
@@ -357,6 +380,7 @@ function drawWaterLines() {
 
     for (let i = 0; i < 15; i++) { // FINAL FIX: Increased number of lines to 15 (Visual match to reference)
         ctx.beginPath();
+        // Start drawing from the calculated water level
         ctx.moveTo(0, waterLevel + i * 5);
         for (let x = 0; x < width; x++) {
             const y = waterLevel + i * 5 + Math.sin(x / waveLength + time * (i + 1) * 0.5) * waveHeight;
