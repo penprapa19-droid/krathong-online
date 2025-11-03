@@ -1,308 +1,91 @@
-/*
- * Loy Krathong Online - Main JavaScript Logic
- * This version wraps all DOM manipulation in DOMContentLoaded to prevent race conditions.
- */
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
+<style>
+  :root{ --ui:#0b1220; --panel:#0e1726; --muted:#9bb0c9; --accent:#3dd6ed; --good:#7ef0a0; }
+  body{margin:0; height:100%; background:#061018; color:#ffffff;}
+  header{padding:20px 20px; position:fixed; z-index:10; inset:0 0 auto 0; background:linear-gradient(180deg, #061018 0%, #061827 100%)}
+  h1{font-size:24px; margin:0px 0px}
+  .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+  .pill{background:#ff0000; border:2px solid #e87575; padding:10px 10px; border-radius:12px}
+  .btn{background:#0f1c33; border:2px solid #28508a; border-radius:12px; color:#e9f0ff; padding:10px 10px;cursor:pointer; font-size:16PX}
+  .btn:active{padding:10px 10px; transform:translateY(1px)}
+  .good{background:#104529; padding:10px 10px; border-color:#1b7d4e}
+  .bad{background:#0b61d3; padding:10px 10px; border-color:#0e96ca}
+  #stage{position:fixed;inset:calc(0px) 0 0 0; z-index:0; display:grid; place-items:center; overflow:hidden}
+  #bgLayer{max-width:100%; max-height:100%; width:100%; height:100%; object-fit:cover; object-position:center bottom;}
+  #scene{position:fixed;inset:0 0 0 0; z-index:1; width:100%; height:100%; touch-action:manipulation}
+  #splash{position:fixed; inset:0; background:rgba(3,7,14,.85); display:grid; place-items:center; z-index:20}
+  .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
+  #splash.hide{opacity:0;pointer-events:none;transition:.35s}
+  input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX; flex-grow:1;}
+  #wishList{max-width:680px; font-size:1rem; list-style:none; padding-left:20px}
+  #wishList .num{display:inline-block; min-width:64px; margin-right:.35rem; color:#9bd3ff}
+  #mobileBar{position:fixed;left:0;right:0;bottom:0;display:none;gap:.6rem;justify-content:center;padding:.6rem;z-index:12;
+             background:linear-gradient(180deg, rgba(6,16,24,0), rgba(6,16,24,.8));}
+  #mobileBar .btn{padding:.7rem 1.1rem;border-radius:1rem} 
+  #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%); background:#0e1726; border:2px solid #1a2a45; border-radius:12px ;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
+  #toast.show{opacity:.96}
 
-/* ===== Configuration & Constants ===== */
-const WATER_FACTOR = 0.75;
-const ROAD_DY = 0;
-const LANES = 5;
-const LANE_STEP = 16;
-const KR_SIZE = 90;
-const MAX_BOATS = 24;
-const TUK_W = 140;
-const TUK_H = 90;
-const TUK_SPEED = 35;
-const ROAD_OFFSET_FROM_BOTTOM = 452;
-
-/* ===== Global State & Utility Functions ===== */
-let cvs, ctx, header, wishEl, statEl, toast, bgm, wishListEl, splash;
-let boats = [];
-let fireworks = [];
-let nextKrathongIndex = 0;
-let waveT = 0, last = performance.now();
-const tuk = { x: -220, w: TUK_W, h: TUK_H, speed: TUK_SPEED };
-
-const rnd = (a, b) => Math.random() * (b - a) + a;
-function makeImg(p) { const i = new Image(); i.crossOrigin = "anonymous"; i.decoding = "async"; i.onload = () => i._ok = true; i.src = p; return i; }
-function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
-function escapeHtml(s) { return String(s).replace(/[&<>\"\']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[m])); }
-function haptic() { if ('vibrate' in navigator) try { navigator.vibrate(12); } catch { } }
-
-/* ===== Assets Loading ===== */
-const tukImg = makeImg("images/tuktuk.png");
-const logoImg = makeImg("images/logo.png");
-const krImgs = ["kt1.png", "kt2.png", "kt3.png", "kt4.png", "kt5.png"].map(n => makeImg("images/" + n));
-
-/* ===== LocalStorage Statistics ===== */
-const LS_COUNT = "loy.count", LS_WQ = "loy.wishes.queue", LS_SEQ = "loy.seq", LS_LOG = "loy.wishes.log";
-let total = +(localStorage.getItem(LS_COUNT) || 0), seq = +(localStorage.getItem(LS_SEQ) || 0);
-
-function bump() {
-    total++;
-    localStorage.setItem(LS_COUNT, total);
-    if (statEl) statEl.textContent = total;
-}
-
-function pushWish(t) {
-    let a = []; try { a = JSON.parse(localStorage.getItem(LS_WQ) || "[]"); } catch { }
-    seq++; localStorage.setItem(LS_SEQ, seq);
-    const item = { n: seq, w: (t || "").trim(), t: Date.now() };
-    a.push(item); localStorage.setItem(LS_WQ, JSON.stringify(a));
-    let log = []; try { log = JSON.parse(localStorage.getItem(LS_LOG) || "[]"); } catch { }
-    log.push(item); localStorage.setItem(LS_LOG, JSON.stringify(log));
-    renderWish();
-}
-
-function renderWish() {
-    if (!wishListEl) return;
-    let a = []; try { a = JSON.parse(localStorage.getItem(LS_WQ) || "[]"); } catch { }
-    const view = a.slice(-6);
-    wishListEl.innerHTML = view.map(x => `<li><span class="num">คนที่ ${x.n}</span>🕯️ ${escapeHtml(x.w)}</li>`).join("");
-}
-
-/* ===== Core Classes (Krathong, Firework) ===== */
-class Krathong {
-    constructor(img, text) {
-        this.img = img; this.text = text || "";
-        this.size = KR_SIZE;
-        this.lane = nextKrathongIndex % LANES;
-        this.x = -120; this.vx = rnd(16, 22);
-        this.phase = rnd(0, Math.PI * 2); this.amp = 2.2; this.freq = .9 + rnd(0, .5); this.t = 0;
-        this.y = this.computeY(0);
-    }
-    computeY(t) {
-        const bob = Math.sin(t * this.freq + this.phase) * this.amp;
-        return laneY(this.lane) + bob;
-    }
-    update(dt) {
-        if (!cvs) return;
-        this.x += this.vx * dt;
-        if (this.x > cvs.width + 160) this.x = -160 - rnd(0, 600);
-        this.t += dt;
-        this.y = this.computeY(this.t);
-    }
-    draw(g) {
-        const wy = waterY(), rx = this.size * .55, ry = 6;
-        const grd = g.createRadialGradient(this.x, wy, 1, this.x, wy, rx);
-        grd.addColorStop(0, 'rgba(0,0,0,.22)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
-        g.fillStyle = grd; g.beginPath(); g.ellipse(this.x, wy, rx, ry, 0, 0, Math.PI * 2); g.fill();
-        if (this.img && this.img._ok) { g.drawImage(this.img, this.x - this.size / 2, this.y - this.size / 2, this.size, this.size); }
-        else { g.fillStyle = '#27ae60'; g.beginPath(); g.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2); g.fill(); }
-        if (this.text) {
-            const msg = this.text;
-            g.font = "600 15px system-ui, -apple-system, 'TH Sarabun New', Prompt, sans-serif";
-            g.textAlign = "center"; g.textBaseline = "middle";
-            const padX = 12;
-            const w = Math.min(320, g.measureText(msg).width + padX * 2);
-            const h = 26;
-            const cy = this.y - this.size * 0.75;
-            const cx = this.x;
-            g.save();
-            g.globalAlpha = .85; g.fillStyle = "#0e1726"; roundRect(g, cx - w / 2, cy - h / 2, w, h, 14); g.fill();
-            g.globalAlpha = 1; g.strokeStyle = "rgba(255,255,255,.25)"; g.lineWidth = 1; roundRect(g, cx - w / 2, cy - h / 2, w, h, 14); g.stroke();
-            g.fillStyle = "#e9f0ff"; g.fillText(msg, cx, cy);
-            g.restore();
-        }
-    }
-}
-
-class Firework {
-    constructor(x) { this.x = x; this.y = waterY(); this.vy = -280; this.state = 'rise'; this.parts = []; }
-    update(dt) {
-        if (this.state === 'rise') { this.y += this.vy * dt; this.vy += 140 * dt; if (this.vy >= -10) this.explode(); }
-        else { for (const p of this.parts) { p.vx *= 0.99; p.vy += 70 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.a *= 0.985; } this.parts = this.parts.filter(p => p.a > 0.06); }
-    }
-    explode() {
-        this.state = 'explode';
-        for (let i = 0; i < 36; i++) {
-            const a = i / 36 * Math.PI * 2, sp = 110 + rnd(0, 90);
-            this.parts.push({ x: this.x, y: this.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1 });
-        }
-    }
-    draw(g) {
-        if (this.state === 'rise') { g.strokeStyle = 'rgba(255,220,120,.9)'; g.beginPath(); g.moveTo(this.x, this.y + 16); g.lineTo(this.x, this.y); g.stroke(); }
-        for (const p of this.parts) {
-            const R = 64 * p.a;
-            if (logoImg && logoImg._ok) {
-                g.save(); g.globalAlpha = p.a; g.drawImage(logoImg, p.x - R, p.y - R, R * 2, R * 2); g.restore();
-            } else {
-                g.save(); g.globalAlpha = p.a; g.fillStyle = '#fff'; g.beginPath(); g.arc(p.x, p.y, R, 0, Math.PI * 2); g.fill(); g.lineWidth = 8; g.strokeStyle = '#e31f26'; g.beginPath(); g.arc(p.x, p.y, R - 4, 0, Math.PI * 2); g.stroke(); g.restore();
-            }
-        }
-    }
-}
-
-/* ===== Canvas Sizing & Anchors ===== */
-const waterY = () => cvs ? Math.round(cvs.height * WATER_FACTOR) : 400;
-const roadY = () => waterY() + ROAD_DY;
-function laneY(i) { return waterY() + 10 + i * LANE_STEP; }
-
-/* ===== Drawing & Animation Loop ===== */
-function drawWater() {
-    if (!ctx) return;
-    const w = cvs.width, h = cvs.height, y = waterY();
-    ctx.fillStyle = 'rgba(10,32,63,0.96)'; ctx.fillRect(0, y, w, h - y);
-    ctx.lineWidth = 1.6; ctx.lineCap = 'round'; ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    for (let i = 0; i < 10; i++) {
-        ctx.beginPath();
-        for (let x = 0; x < w; x += 20) {
-            const yy = y + Math.sin((x / 40) + waveT * 1.2 + i) * 6 + i * 16;
-            if (x === 0) ctx.moveTo(x, yy); else ctx.lineTo(x, yy);
-        }
-        ctx.stroke();
-    }
-}
-
-function roadYFromBackground() {
-    if (!cvs) return 500;
-    let y = cvs.height - ROAD_OFFSET_FROM_BOTTOM;
-    y = Math.max(y, waterY() + 10);
-    return y;
-}
-
-function drawTuk(dt) {
-    if (!ctx || !cvs) return;
-    tuk.x += tuk.speed * dt;
-    if (tuk.x > cvs.width + 220) tuk.x = -220;
-    const y = roadYFromBackground() - tuk.h;
-    if (tukImg && tukImg._ok) { ctx.drawImage(tukImg, tuk.x, Math.min(Math.max(y, 0), cvs.height - tuk.h), tuk.w, tuk.h); }
-    else { ctx.fillStyle = '#2ecc71'; ctx.fillRect(tuk.x, Math.min(Math.max(y, 0), cvs.height - tuk.h), tuk.w, tuk.h); }
-}
-
-function loop(ts) {
-    if (!ctx) {  return; }
-    const dt = Math.min(0.033, (ts - last) / 1000); last = ts; waveT += dt;
-    ctx.clearRect(0, 0, cvs.width, cvs.height);
-    drawWater();
-    for (const fw of fireworks) { fw.update(dt); fw.draw(ctx); }
-    drawTuk(dt);
-    const ordered = boats.slice().sort((a, b) => a.y - b.y);
-    for (const b of ordered) { b.update(dt); b.draw(ctx); }
-    fireworks = fireworks.filter(fw => fw.parts.length > 0 || fw.state === 'rise');
+  /* CSS เพื่อซ่อนปุ่มใน Header บนมือถือ */
+  @media (max-width:640px){
+    header{padding:10px 10px;}
+    #scene{ top:100px; height:calc(100% - 100px); } /* Adjusted top for mobile header */
+    h1{font-size:20px; margin:0px 0px}
+    .row{gap:8px;}
+    .pill{padding:8px 8px;}
+    .btn{padding:8px 8px; font-size:14PX}
+    input[type="text"]{min-width:100%; font-size:14PX; margin-top:8px; flex-grow:1;}
     
-}
-
-/* ===== DOMContentLoaded: Main Entry Point ===== */
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize DOM Elements
-    cvs = document.getElementById("scene");
-    ctx = cvs.getContext("2d");
-    header = document.querySelector("header");
-    wishEl = document.getElementById("wish");
-    statEl = document.getElementById("statCount");
-    toast = document.getElementById("toast");
-    bgm = document.getElementById("bgm");
-    wishListEl = document.getElementById("wishList");
-    splash = document.getElementById('splash');
-
-    // Initial UI Update
-    if (statEl) statEl.textContent = total;
-    renderWish();
-
-    // Sizing
-    function size() {
-        if (!cvs || !header) return;
-        const h = header.offsetHeight;
-        cvs.style.top = `${h}px`;
-        cvs.style.height = `calc(100% - ${h}px)`;
-        cvs.style.width = '100%';
-        cvs.width = cvs.offsetWidth;
-        cvs.height = cvs.offsetHeight;
-    }
-    window.addEventListener("resize", () => requestAnimationFrame(size));
-    window.addEventListener("orientationchange", size);
-    size();
-
-    // Splash Screen Logic
-    function hideSplash() {
-        if (!splash) return;
-        splash.classList.add('hide');
-        setTimeout(() => splash.remove?.(), 350);
-    }
-    setTimeout(hideSplash, 2500);
-
-    // Music Logic
-    function safePlay() { if(bgm) try { const p = bgm.play(); if (p && p.catch) p.catch(() => { }); } catch { } }
-
-    // Event Handlers
-    function launch(text) {
-        const imgs = krImgs.filter(Boolean);
-        let im = null;
-        if (imgs.length) { im = imgs[nextKrathongIndex % imgs.length]; nextKrathongIndex = (nextKrathongIndex + 1) % imgs.length; }
-        if (boats.length >= MAX_BOATS) { boats.shift(); }
-        boats.push(new Krathong(im, text));
-        bump();
-        pushWish(text);
-    }
-
-    function showToast() { if (toast) { toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 700); } }
-
-    // Button Listeners
-    document.getElementById('headerLaunchBtn')?.addEventListener('click', () => {
-        launch(wishEl.value || "");
-        if (wishEl) wishEl.value = "";
-        showToast();
-        haptic();
-    });
-
-    document.getElementById('tapLaunchMobile')?.addEventListener('click', () => {
-        launch("");
-        showToast();
-        haptic();
-    });
-
-    cvs.addEventListener('click', () => { launch(""); showToast(); haptic(); });
-    cvs.addEventListener('touchstart', () => { launch(""); showToast(); haptic(); }, { passive: true });
-
-    document.getElementById('tapMusicMobile')?.addEventListener('click', () => {
-        if (bgm.paused) safePlay(); else bgm.pause();
-    });
-
-    document.getElementById('headerMusicBtn')?.addEventListener('click', () => {
-        if (bgm.paused) safePlay(); else bgm.pause();
-    });
-
-    document.getElementById('startBtn')?.addEventListener('click', () => {
-        hideSplash();
-        safePlay();
-    });
-
-    document.getElementById('resetBtn')?.addEventListener('click', () => {
-        if (confirm("ยืนยันเริ่มนับใหม่และลบคำอธิษฐานทั้งหมด?")) {
-            localStorage.removeItem(LS_COUNT);
-            localStorage.removeItem(LS_WQ);
-            localStorage.removeItem(LS_SEQ);
-            localStorage.removeItem(LS_LOG);
-            total = 0; seq = 0; if (statEl) statEl.textContent = 0;
-            boats.length = 0;
-            renderWish();
-        }
-    });
-
-    document.getElementById('exportBtn')?.addEventListener('click', () => {
-        let log = []; try { log = JSON.parse(localStorage.getItem(LS_LOG) || "[]"); } catch { }
-        const rows = [["seq", "timestamp", "ISO", "wish"]];
-        for (const x of log) { const iso = new Date(x.t || Date.now()).toISOString(); rows.push([x.n, x.t, iso, (x.w || "").replace(/\"/g, '""')]); }
-        const csv = rows.map(r => r.map(v => `"${String(v)}"`).join(",")).join("\n");
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a"); a.href = url; a.download = "loykrathong_report.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-    });
-
-    // Initial Krathongs
-    for (let i = 0; i < LANES; i++) {
-        const im = krImgs[i % krImgs.length];
-        boats.push(new Krathong(im, ""));
-        boats[i].x = -180 - i * 200;
-        nextKrathongIndex++;
-    }
-
-    // Initial Fireworks
-    function spawnTriple() { if (cvs) { const w = cvs.width; [w * .25, w * .5, w * .75].forEach(x => fireworks.push(new Firework(x))); } }
-    setTimeout(spawnTriple, 2500);
-    setInterval(spawnTriple, 10000);
-
-    // Start the animation loop
-    
-});
+    .card{width:min(90vw,300px);}
+    /* ซ่อน mobileBar บนมือถือ */
+    #mobileBar { display: none !important; }
+  }
+</style>
+<link rel="icon" href="images/logo.png">
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</h1>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <span class="pill">ลอยแล้ว <strong id="statCount">0</strong> ใบ</span>
+    <button id="headerMusicBtn" class="btn">▶/⏸ เพลง</button>
+    <button id="resetBtn" class="btn bad">🧹 เริ่มนับใหม่</button>
+    <button id="exportBtn" class="btn bad">⬇️ รายงาน CSV</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <input id="wish" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ…" style="flex-grow:1;">
+    <button id="headerLaunchBtn" class="btn good">ปล่อย</button>
+  </div>
+</header>
+<div id="stage">
+    <picture>
+      <source media="(max-width:640px)" srcset="images/bg5mb.png">
+      <img id="bgLayer" src="images/bg5.png" alt="background" style="width:auto;">
+    </picture>
+</div>
+<canvas id="scene"></canvas>
+<div id="toast">ปล่อยแล้ว 🎋</div>
+<div id="mobileBar">
+  <button id="tapLaunchMobile" class="btn good">ปล่อยกระทง</button>
+  <button id="tapMusicMobile" class="btn">▶/⏸ เพลง</button>
+</div>
+<audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
+<div id="splash">
+  <div class="card">
+    <h1 style="margin:4px 0 0 0">แตะหน้าจอเพื่อเริ่มลอยกระทง</h1>
+    <p class="muted" style="margin:10px 10px 10px 10px"><span id="loadInfo">กำลังเตรียมฉาก…</span> • หากเพลงไม่ดัง ให้กดปุ่ม ▶ เล่นเพลง</p>
+    <button id="startBtn" class="btn good">เริ่มลอยกระทง</button>
+  </div>
+</div>
+<section style="position:fixed; left:10px; bottom:10px; right:10px; z-index:9; color:#bbccdd; pointer-events:none;">
+  <ul id="wishList"></ul>
+</section>
+<script src="main.js?v=20231103_2"></script>
+</body>
+</html>
