@@ -192,7 +192,7 @@ document.getElementById('launch').onclick=()=>{
 };
 
 // Mobile tap launch (if element exists)
-document.getElementById('tapLaunchMobile').onclick=()=>{
+const tapLaunchMobile = document.getElementById('tapLaunchMobile'); if(tapLaunchMobile) tapLaunchMobile.onclick=()=>{
   launch("");
   showToast();
   haptic();
@@ -207,7 +207,7 @@ cvs.addEventListener('touchstart', ()=>{ launch(""); showToast(); haptic(); }, {
 function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
 
 // Play/Pause button
-document.getElementById('tapMusicMobile').onclick = ()=>{
+const tapMusicMobile = document.getElementById('tapMusicMobile'); if(tapMusicMobile) tapMusicMobile.onclick = ()=>{
   if(bgm.paused) safePlay(); else bgm.pause();
 };
 
