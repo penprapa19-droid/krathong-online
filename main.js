@@ -223,7 +223,7 @@ class Firework {
         
         if (this.isFixed) {
             this.logoImage = new Image();
-            this.logoImage.src = assets.fireworkLogo;
+            this.logoImage.src = 'images/logo.png';
         }
     }
 
