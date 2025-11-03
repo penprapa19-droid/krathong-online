@@ -47,7 +47,7 @@ const FIREWORK_INTERVAL = 5000;
 const assets = {
     tuktuk: 'images/tuktuk.png', 
     song: 'audio/song.mp3', 
-    fireworkLogo: 'images/no_smoking_logo.png', // Assuming this is the logo file
+    fireworkLogo: 'images/logo.png', // Temporary fix: Using a known existing asset to prevent 404 and InvalidStateError
     krathongs: []
 };
 
@@ -220,7 +220,7 @@ class Firework {
 
     draw() {
         if (this.exploded) {
-            if (this.logoImage && this.logoImage.complete) {
+            if (this.logoImage && this.logoImage.complete && this.logoImage.naturalWidth !== 0) { // Check for complete and not broken
                 // FINAL FIX: Draw the logo image instead of particles
                 const logoSize = 100;
                 ctx.globalAlpha = 1 - (this.life / this.maxLife); // Fade out the logo
