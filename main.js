@@ -26,7 +26,15 @@ const WATER_LEVEL_OFFSET = 100;
 let canvas, ctx;
 let width, height;
 let krathongs = [];
-let waterLevel = 0; // FINAL FIX: Global variable for precise water level calculation
+let waterLevel = 0; // Global variable for precise water level calculation
+
+// FINAL FIX: Hardcoded offsets for tuktuk and water level based on visual inspection
+// These values are percentages of the screen height, which is more reliable with background-size: cover
+const DESKTOP_ROAD_OFFSET_PERCENT = 0.18; // 18% from bottom for desktop (bg5.png)
+const DESKTOP_WATER_OFFSET_PERCENT = 0.10; // 10% from bottom for desktop (bg5.png)
+
+const MOBILE_ROAD_OFFSET_PERCENT = 0.20; // 20% from bottom for mobile (bg5mb.png)
+const MOBILE_WATER_OFFSET_PERCENT = 0.12; // 12% from bottom for mobile (bg5mb.png)
 let tuktuk = { x: -100, y: 0, image: null, width: 150, height: 100 };
 let fireworks = []; 
 let lastTime = 0;
@@ -89,48 +97,29 @@ function resizeCanvas() {
 
     // Recalculate tuktuk position based on new height
     if (tuktuk.image) {
-        // FINAL FIX: Precise calculation for 'contain' background-size responsiveness
-        const bgWidth = 1920;
-        const bgHeight = 1080;
-        const bgAspectRatio = bgWidth / bgHeight;
+        // FINAL FIX: Use hardcoded offsets (percentage from bottom) based on screen size
+        // This is more reliable with background-size: cover
+        let roadOffset, waterOffset;
 
-        let effectiveWidth, effectiveHeight, xOffset, yOffset;
-
-        if (width / height > bgAspectRatio) {
-            // Screen is wider than image aspect ratio (black bars on left/right)
-            effectiveHeight = height;
-            effectiveWidth = height * bgAspectRatio;
-            xOffset = (width - effectiveWidth) / 2;
-            yOffset = 0;
+        if (width <= 768) {
+            // Mobile (using bg5mb.png)
+            roadOffset = MOBILE_ROAD_OFFSET_PERCENT;
+            waterOffset = MOBILE_WATER_OFFSET_PERCENT;
         } else {
-            // Screen is taller than image aspect ratio (black bars on top/bottom)
-            effectiveWidth = width;
-            effectiveHeight = width / bgAspectRatio;
-            xOffset = 0;
-            yOffset = (height - effectiveHeight) / 2;
+            // Desktop (using bg5.png)
+            roadOffset = DESKTOP_ROAD_OFFSET_PERCENT;
+            waterOffset = DESKTOP_WATER_OFFSET_PERCENT;
         }
 
-        // The red line is at 82% of the image height from the top (18% from the bottom)
-        const roadPositionRatio = 0.82; 
-        const roadYInImage = bgHeight * roadPositionRatio;
-        
-        // Convert image coordinate to screen coordinate
-        const scaleFactor = effectiveHeight / bgHeight;
-        const roadYScreen = yOffset + (roadYInImage * scaleFactor);
+        // Calculate road position (Y-coordinate from top)
+        const roadYScreen = height * (1 - roadOffset);
 
         // FINAL FIX: Adjusting the vertical position of the tuktuk to run on the red line
         // The tuktuk image should be placed so its bottom edge is on the road line.
         tuktuk.y = roadYScreen - tuktuk.height + 10; // +10 for fine-tuning the alignment
         
-        // Recalculate water level based on the new precise calculation
-        // Water level is at 90% of the image height from the top (10% from the bottom)
-        const waterPositionRatio = 0.90;
-        const waterYInImage = bgHeight * waterPositionRatio;
-        const waterYScreen = yOffset + (waterYInImage * scaleFactor);
-        
-        // Store the calculated water level for krathong positioning and wave drawing
-        // This is the Y-coordinate where the water surface starts
-        waterLevel = waterYScreen;
+        // Calculate water level position (Y-coordinate from top)
+        waterLevel = height * (1 - waterOffset);
         
         // Update krathong positions based on the new water level
         krathongs.forEach(k => {
