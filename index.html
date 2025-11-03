@@ -239,13 +239,21 @@
         @media (max-width: 768px) {
             .header {
                 padding: 5px;
+                /* Allow header to wrap buttons on very small screens */
+                flex-wrap: wrap; 
+            }
+            .header-left, .header-right {
+                /* Ensure buttons are centered if they wrap */
+                justify-content: center;
+                gap: 5px; /* Reduced gap for mobile */
             }
             .header-logo {
                 height: 30px;
             }
             .btn {
-                padding: 5px 10px;
-                font-size: 0.9em;
+                padding: 5px 8px; /* Reduced padding */
+                font-size: 0.8em; /* Reduced font size */
+                white-space: nowrap; /* Prevent button text from wrapping */
             }
         }
     </style>
