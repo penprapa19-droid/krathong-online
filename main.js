@@ -14,9 +14,8 @@ const KRATHONG_SPEED = 0.5;
 const TUKTUK_SPEED = 1.5;
 const FIREWORK_COUNT = 10;
 // Adjusted ROAD_OFFSET_FROM_BOTTOM to lift the tuktuk above the red area
-const ROAD_OFFSET_FROM_BOTTOM = 300; 
-const WATER_FACTOR = 0.1; // Controls how much krathongs sink into the water
-const WATER_LEVEL_OFFSET = 150; // Offset from the bottom of the screen for the water line
+const ROAD_OFFSET_FROM_BOTTOM = 250; // Further adjusted to be above the red area (approx. 250px from bottom)
+const WATER_LEVEL_OFFSET = 100; // Adjusted water level to be lower (approx. 100px from bottom)
 
 // Global Variables
 let canvas, ctx;
@@ -79,11 +78,6 @@ function resizeCanvas() {
     height = window.innerHeight;
     canvas.width = width;
     canvas.height = height;
-
-    // --- Fix for Background Size (Issue 1) ---
-    // The background is set in index.html's CSS. We need to ensure the CSS is correct.
-    // We will assume the user will update the CSS in index.html to use 'background-size: cover;'
-    // For the canvas elements, we just need to recalculate their positions.
 
     // Recalculate tuktuk position based on new height
     if (tuktuk.image) {
