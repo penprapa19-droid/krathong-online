@@ -12,7 +12,7 @@ const KRATHONG_COUNT = 5;
 // FINAL FIX: Increased spacing to prevent krathongs from colliding
 const KRATHONG_SPACING = 300; 
 // FINAL FIX: Increased KRATHONG_SPEED slightly (from 0.5 to 0.7)
-const KRATHONG_SPEED = 0.7;
+const KRATHONG_SPEED = 1.0; // Increased speed again as requested
 // FINAL FIX: Increased TUKTUK_SPEED significantly (from 1.5 to 4.0) to meet the user's request for a faster speed (40)
 const TUKTUK_SPEED = 4.0; 
 const FIREWORK_COUNT = 10;
@@ -107,7 +107,7 @@ function resizeCanvas() {
         const roadY = imageBottom - (effectiveHeight * roadPositionRatio);
 
         // FINAL FIX: Adjusting the vertical position of the tuktuk to run on the red line (Fine-tuned to match reference)
-        tuktuk.y = roadY - tuktuk.height + 10; // Adjusted from +5 to +10 for better visual alignment on the red line 
+        tuktuk.y = roadY - tuktuk.height + 5; // Adjusted back to +5 to lower the tuktuk slightly
     }
 
     // Recalculate krathong positions
@@ -162,7 +162,15 @@ class Krathong {
                 const displayWish = this.wish.length > maxLen ? this.wish.substring(0, maxLen) + '...' : this.wish;
 
                 // Position text above the krathong (approx. 15px above the top edge)
-                ctx.fillText(displayWish, this.x + this.width / 2, this.y - 15);
+                const textX = this.x + this.width / 2;
+                const textY = this.y - 15;
+                
+                // FINAL FIX: Add a faint border/shadow for better visibility
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)'; // Faint black border
+                ctx.lineWidth = 2;
+                ctx.strokeText(displayWish, textX, textY);
+                
+                ctx.fillText(displayWish, textX, textY);
                 ctx.restore();
             }
         }
@@ -172,43 +180,56 @@ class Krathong {
 // Firework Class 
 class Firework {
     constructor(x, y, isFixed = false) {
-        this.x = x;
-        this.y = y;
+        this.targetX = x;
+        this.targetY = y;
+        this.x = x; // Start X
+        this.y = height; // Start from bottom
+        this.speed = 5; // Ascending speed
         this.particles = [];
         this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
         this.life = 0;
         this.maxLife = 100;
         this.exploded = false;
+        this.isAscending = isFixed; // Use isAscending for fixed fireworks
         this.isFixed = isFixed;
         this.logoImage = null; // For the logo firework
-        this.createParticles();
+        
+        if (this.isFixed) {
+            this.logoImage = new Image();
+            this.logoImage.src = assets.fireworkLogo;
+        }
     }
 
     createParticles() {
-        // FINAL FIX: Load logo image for firework
-        if (this.isFixed && assets.fireworkLogo) {
-            this.logoImage = new Image();
-            this.logoImage.src = assets.fireworkLogo;
-            this.exploded = true;
-            return;
-        }
-
-        const particleCount = this.isFixed ? 80 : 50;
-        for (let i = 0; i < particleCount; i++) {
-            this.particles.push({
-                x: this.x,
-                y: this.y,
-                vx: Math.random() * 4 - 2,
-                vy: Math.random() * 4 - 2,
-                alpha: 1,
-                size: Math.random() * 2 + 1
-            });
+        // Only create particles for non-logo fireworks
+        if (!this.isFixed) {
+            const particleCount = 50;
+            for (let i = 0; i < particleCount; i++) {
+                this.particles.push({
+                    x: this.x,
+                    y: this.y,
+                    vx: Math.random() * 4 - 2,
+                    vy: Math.random() * 4 - 2,
+                    alpha: 1,
+                    size: Math.random() * 2 + 1
+                });
+            }
         }
         this.exploded = true;
     }
 
     update(deltaTime) {
-        if (this.exploded && !this.logoImage) {
+        if (this.isAscending) {
+            // Ascend until target Y is reached
+            if (this.y > this.targetY) {
+                this.y -= this.speed * deltaTime * 0.01;
+            } else {
+                this.isAscending = false;
+                this.exploded = true;
+                this.x = this.targetX; // Set final X position
+            }
+        } else if (this.exploded && !this.isFixed) {
+            // Normal particle explosion logic
             this.life += deltaTime * 0.01;
             this.particles.forEach(p => {
                 p.x += p.vx;
@@ -217,31 +238,39 @@ class Firework {
                 p.alpha -= 0.01;
             });
             this.particles = this.particles.filter(p => p.alpha > 0);
+        } else if (this.exploded && this.isFixed) {
+            // Logo firework fade out
+            this.life += 1;
         }
     }
 
     draw() {
-        if (this.exploded) {
-                // FINAL FIX: Draw the logo image in a circular pattern
-                if (this.logoImage && this.logoImage.complete && this.logoImage.naturalWidth !== 0) {
-                    const logoSize = 100; // Size of the logo
-                    const count = 20; // Number of logos to draw
-                    const spread = 10; // How much the logos spread out
+        if (this.isAscending) {
+            // Draw ascending firework as a small dot
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (this.exploded) {
+            // FINAL FIX: Draw the logo image in a circular pattern
+            if (this.isFixed && this.logoImage && this.logoImage.complete && this.logoImage.naturalWidth !== 0) {
+                const logoSize = 100; // Size of the logo
+                const count = 20; // Number of logos to draw
+                const spread = 10; // How much the logos spread out
+                
+                ctx.globalAlpha = 1 - (this.life / this.maxLife); // Fade out the whole effect
+                
+                for (let i = 0; i < count; i++) {
+                    const angle = (i / count) * Math.PI * 2;
+                    // Calculate position with a slight spread and rotation
+                    const logoX = this.x + Math.cos(angle) * spread * (this.life / this.maxLife);
+                    const logoY = this.y + Math.sin(angle) * spread * (this.life / this.maxLife);
                     
-                    ctx.globalAlpha = 1 - (this.life / this.maxLife); // Fade out the whole effect
-                    
-                    for (let i = 0; i < count; i++) {
-                        const angle = (i / count) * Math.PI * 2;
-                        // Calculate position with a slight spread and rotation
-                        const logoX = this.x + Math.cos(angle) * spread * (this.life / this.maxLife);
-                        const logoY = this.y + Math.sin(angle) * spread * (this.life / this.maxLife);
-                        
-                        ctx.drawImage(this.logoImage, logoX - logoSize / 2, logoY - logoSize / 2, logoSize, logoSize);
-                    }
-                    
-                    ctx.globalAlpha = 1;
-                    this.life += 1; // Manually increase life for fade out
-                } else if (!this.logoImage) {
+                    ctx.drawImage(this.logoImage, logoX - logoSize / 2, logoY - logoSize / 2, logoSize, logoSize);
+                }
+                
+                ctx.globalAlpha = 1;
+            } else if (!this.isFixed) {
                 this.particles.forEach(p => {
                     ctx.fillStyle = this.color;
                     ctx.globalAlpha = p.alpha;
@@ -256,7 +285,7 @@ class Firework {
 
     isFinished() {
         // FINAL FIX: Check if logo firework has faded out
-        if (this.logoImage) {
+        if (this.isFixed) {
             return this.life >= this.maxLife;
         }
         return this.exploded && this.particles.length === 0;
@@ -274,6 +303,8 @@ function gameLoop(timestamp) {
     ctx.clearRect(0, 0, width, height);
 
     // FINAL FIX: Re-introducing water line drawing
+    // FINAL FIX: Draw water background before water lines
+    drawWaterBackground();
     drawWaterLines();
 
     // Update and Draw Krathongs
@@ -314,6 +345,13 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
+// FINAL FIX: Function to draw the water background
+function drawWaterBackground() {
+    const waterLevel = height - WATER_LEVEL_OFFSET;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Darker color for the water body
+    ctx.fillRect(0, waterLevel, width, height - waterLevel);
+}
+
 // FINAL FIX: Re-introducing water line drawing function with more lines and slower speed
 function drawWaterLines() {
     const waterLevel = height - WATER_LEVEL_OFFSET;
@@ -322,7 +360,7 @@ function drawWaterLines() {
     const time = Date.now() * 0.0003; // FINAL FIX: Even Slower speed (Visual match to reference)
 
     // FINAL FIX: Darker, thicker lines for a more prominent water effect (Visual match to reference)
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)'; 
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // Lighter color for lines on dark background
     ctx.lineWidth = 3; // FINAL FIX: Thicker lines (Visual match to reference)
 
     for (let i = 0; i < 15; i++) { // FINAL FIX: Increased number of lines to 15 (Visual match to reference)
