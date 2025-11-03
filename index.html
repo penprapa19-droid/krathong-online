@@ -1,325 +1,415 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
-    <meta name="description" content="ลอยกระทงออนไลน์">
-    <meta name="keywords" content="ลอยกระทง, Loy Krathong, Loy Krathong Online">
-    <meta name="author" content="Manus">
-    <meta name="theme-color" content="#000000">
-    <link rel="icon" href="images/logo.png">
-    <!-- FINAL FIX: Adding TH Sarabun New font via Google Fonts for Krathong wish text -->
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        @font-face {
-            font-family: 'Chonburi';
-            src: url('Chonburi-Regular.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-        }
-        /* Fallback for TH Sarabun New */
-        .th-sarabun {
-            font-family: 'Sarabun', sans-serif;
-        }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ลอยกระทงออนไลน์ · ปลอดบุหรี่</title>
+<style>
+  :root{ --ui:#0b1220; --panel:#0e1726; --muted:#9bb0c9; --accent:#3dd6ed; --good:#7ef0a0; }
+  body{margin:0; height:100%; background:#061018; color:#ffffff;}
+  header{padding:20px 20px; position:fixed; z-index:10; inset:0 0 auto 0; background:linear-gradient(180deg, #061018 0%, #061827 100%)}
+  h1{font-size:24px; margin:0px 0px}
+  .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+  .pill{background:#ff0000; border:2px solid #e87575; padding:10px 10px; border-radius:12px}
+  .btn{background:#0f1c33; border:2px solid #28508a; border-radius:12px; color:#e9f0ff; padding:10px 10px;cursor:pointer; font-size:16PX}
+  .btn:active{padding:10px 10px; transform:translateY(1px)}
+  .good{background:#104529; padding:10px 10px; border-color:#1b7d4e}
+  .bad{background:#0b61d3; padding:10px 10px; border-color:#0e96ca}
+  /* Layers */
+  #stage{position:fixed;inset:calc(0px) 0 0 0; z-index:0; display:grid; place-items:center; overflow:hidden}
+  #bgLayer{max-width:100%; max-height:100%; width:100%; height:100%; object-fit:contain; object-position:center center;}
+  #scene{position:fixed;inset:calc(0px) 0 0 0; z-index:1; width:100%; height:calc(100% - -20px); touch-action:manipulation}
+  /* Splash */
+  #splash{position:fixed; inset:0; background:rgba(3,7,14,.85); display:grid; place-items:center; z-index:20}
+  .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
+  #splash.hide{opacity:0;pointer-events:none;transition:.35s}
+  input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX}
+  /* Wish list */
+  #wishList{max-width:680px; font-size:1rem; list-style:none; padding-left:20px}
+  #wishList .num{display:inline-block; min-width:64px; margin-right:.35rem; color:#9bd3ff}
+  /* Mobile bar */
+  #mobileBar{position:fixed;left:0;right:0;bottom:0;display:none;gap:.6rem;justify-content:center;padding:.6rem;z-index:12;
+             background:linear-gradient(180deg, rgba(6,16,24,0), rgba(6,16,24,.8));}
+  #mobileBar .btn{padding:.7rem 1.1rem;border-radius:1rem} 
+  /* Toast */
+  #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%); background:#0e1726; border:2px solid #1a2a45; border-radius:12px ;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
+  #toast.show{opacity:.96}
 
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
-            font-family: 'Chonburi', sans-serif;
-            color: #fff;
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-        }
 
-        #splash {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 1s ease-out;
-        }
+  @media (max-width:640px){
+    body{margin:0; height:100%; background:#061018; color:#ffffff;}
+    header{padding:20px 20px; position:fixed; z-index:10; inset:0 0 auto 0; background:linear-gradient(180deg, #061018 0%, #061827 100%)}
+    h1{font-size:22px; color: #ff0000 ;margin:0px 0px}
+    .row{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+    #stage{position:fixed;inset:calc(0px) 0 0 0; z-index:0; display:grid; place-items:center; overflow:hidden}
+    #bgLayer{max-width:100%; max-height:100%; width:100%; height:100%; object-fit:contain; object-position:center center;}
+    #scene{position:fixed;inset:calc(0px) 0 0 0; z-index:1; width:100%; height:calc(100% - -20px); touch-action:manipulation}
+    #mobileBar{display:flex}
+    /* Splash */
+    #splash{position:fixed; inset:0; background:rgba(3,7,14,.85); display:grid; place-items:center; z-index:20}
+    .card{background:#0e1726; border:2px solid #1a2a45; border-radius:12px; padding:22px 24px; box-shadow:0 10px 40px rgba(0,0,0,.4); width:min(90vw,300px);text-align:center}
+    #splash.hide{opacity:0;pointer-events:none;transition:.35s}
+    input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX}
+    /* Wish list */
+    #wishList{max-width:680px; font-size:1rem; list-style:none; padding-left:20px}
+    #wishList .num{display:inline-block; min-width:64px; margin-right:.35rem; color:#9bd3ff}
+  }
+</style>
 
-        #splash.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #splash-text {
-            font-size: 2em;
-            margin-top: 20px;
-            color: #ffcc00;
-            text-shadow: 0 0 10px #ff9900;
-        }
-
-        #loading-bar {
-            width: 80%;
-            max-width: 400px;
-            height: 10px;
-            background-color: #333;
-            border-radius: 5px;
-            margin-top: 20px;
-            overflow: hidden;
-        }
-
-        #loading-progress {
-            height: 100%;
-            width: 0;
-            background-color: #ffcc00;
-            transition: width 0.3s ease-out;
-        }
-
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        #background {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        /* FINAL FIX: Use contain to ensure the whole image is visible, and center it */
-        /* To make the canvas elements align correctly with the contained background, we need to ensure the background is always visible */
-        /* FINAL FIX: Changing to 'cover' to ensure the background always fills the screen, simplifying canvas positioning */
-        background-size: cover;
-            background-repeat: no-repeat;
-            background-position: center center;
-            z-index: 1;
-        }
-
-        /* FINAL FIX: Use different background images for desktop and mobile as requested */
-        @media (max-width: 768px) {
-            #background {
-                background-image: url('images/bg5mb.png');
-            }
-        }
-
-        @media (min-width: 769px) {
-            #background {
-                background-image: url('images/bg5.png');
-            }
-        }
-
-        #canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 2;
-        }
-
-        #ui-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            pointer-events: none; /* Allow clicks to pass through to canvas by default */
-        }
-
-        .header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            box-sizing: border-box;
-            pointer-events: all; /* Re-enable clicks for header elements */
-        }
-
-        .header-left, .header-right {
-            display: flex;
-            gap: 10px;
-        }
-
-        .header-logo {
-            height: 40px;
-            pointer-events: none;
-        }
-
-        .btn {
-            background-color: rgba(0, 0, 0, 0.6);
-            color: #ffcc00;
-            border: 2px solid #ffcc00;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-family: 'Chonburi', sans-serif;
-            font-size: 1em;
-            transition: background-color 0.3s, color 0.3s;
-            pointer-events: all;
-        }
-
-        .btn:hover {
-            background-color: #ffcc00;
-            color: #000;
-        }
-
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        #wish-input-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
-            display: none;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 20;
-            pointer-events: all;
-            max-width: 90%;
-            width: 400px;
-        }
-
-        #wish-input-container h2 {
-            margin: 0;
-            color: #ffcc00;
-            text-align: center;
-        }
-
-        #wish-input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ffcc00;
-            border-radius: 5px;
-            background-color: #333;
-            color: #fff;
-            font-family: 'Chonburi', sans-serif;
-            box-sizing: border-box;
-            resize: none;
-        }
-
-        #launch {
-            background-color: #ffcc00;
-            color: #000;
-            border: none;
-            font-size: 1.2em;
-            padding: 10px;
-        }
-
-        #launch:hover {
-            background-color: #fff;
-        }
-
-        #toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #ffcc00;
-            padding: 10px 20px;
-            border-radius: 20px;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            z-index: 30;
-            pointer-events: none;
-            font-size: 1.1em;
-        }
-
-        #toast.show {
-            opacity: 1;
-        }
-
-        /* Mobile Controls Bar - Hidden via CSS */
-        #mobileBar {
-            display: none !important;
-        }
-
-        /* Adjust header for mobile to ensure buttons are visible */
-        @media (max-width: 768px) {
-            .header {
-                padding: 5px;
-                /* Allow header to wrap buttons on very small screens */
-                flex-wrap: wrap; 
-            }
-            .header-left, .header-right {
-                /* Ensure buttons are centered if they wrap */
-                justify-content: center;
-                gap: 5px; /* Reduced gap for mobile */
-            }
-            .header-logo {
-                height: 30px;
-            }
-            .btn {
-                padding: 5px 8px; /* Reduced padding */
-                font-size: 0.8em; /* Reduced font size */
-                white-space: nowrap; /* Prevent button text from wrapping */
-            }
-        }
-    </style>
+<link rel="icon" href="logo.png">
 </head>
+
 <body>
+<header>
+  <div class="row">
+    <h1>🎑 ลอยกระทงออนไลน์ · ปลอดบุหรี่</h1>
+  </div>
+  <div class="row" style="margin-top:30px">
+    <span class="pill">ลอยแล้ว <strong id="statCount">0</strong> ใบ</span>
+    <button id="playBtn" class="btn" style="display: none;">▶ เล่นเพลง</button>
+    <button id="stopBtn" class="btn" style="display: none;">⏸ หยุด</button>
+    <button id="tapMusic" class="btn">▶/⏸ เพลง</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button id="resetBtn" class="btn bad" style="display: none;">🧹 เริ่มนับใหม่</button>
+    <button id="exportBtn" class="btn bad" style="display: none;">⬇️ รายงาน CSV</button>
+    <input id="wish" class="btn good" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ… แล้วกด >">
+    <button id="launch" class="btn good">ปล่อย</button>
+  </div>
 
-    <div id="splash">
-        <img src="images/logo.png" alt="Loy Krathong Logo" style="width: 150px; height: 150px;">
-        <div id="splash-text">กำลังเตรียมฉาก...</div>
-        <div id="loading-bar">
-            <div id="loading-progress"></div>
-        </div>
-    </div>
+<!-- Default Statcounter code for ลอยกระทง -->
+<script type="text/javascript">
+var sc_project=13175986; 
+var sc_invisible=1; 
+var sc_security="8a0ce33d"; 
+</script>
+<script type="text/javascript"
+src="https://www.statcounter.com/counter/counter.js"
+async></script>
+<noscript><div class="statcounter"><a title="Web Analytics
+Made Easy - Statcounter" href="https://statcounter.com/"
+target="_blank"><img class="statcounter"
+src="https://c.statcounter.com/13175986/0/8a0ce33d/1/"
+alt=""
+referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
+<!-- End of Statcounter Code -->
+</header>
 
-    <div id="game-container">
-        <div id="background"></div>
-        <canvas id="canvas"></canvas>
+<div id="stage">
+    <picture>
+      <source media="(max-width:640px)" srcset="bg5mb.png" style="width:auto;">
+    <!-- จอเล็กมาก -->
+    <source media="(max-width: 400px)" srcset="size_390x844.jpg">
+     <!-- จอกลุ่ม ~425px -->
+    <source media="(max-width: 400px)" srcset="size_360X740.jpg">
+    <!-- จอกลุ่ม ~425px -->
+    <source media="(max-width: 400px)" srcset="size_344X882.jpg">
+    <!-- จอกลุ่ม ~320px -->
+    <source media="(max-width: 420px)" srcset="size_412x915.jpg">
+    <!-- จอกลุ่ม ~430px -->
+    <source media="(max-width: 460px)" srcset="size_430x932.jpg">
+    <!-- จอกลุ่ม ~412px -->
+    <source media="(max-width: 460px)" srcset="size_412x520.jpg">
+    <!-- จอกลุ่ม ~430px -->
+   <source media="(max-width: 460px)" srcset="size_414x896.jpg">
+    <!-- จอกลุ่ม ~430px -->
+    <source media="(max-width: 460px)" srcset="size_430x932.jpg">
+    <!-- จอกลุ่ม ~430px -->
+    <source media="(max-width: 460px)" srcset="size_540x720.jpg">
+    <!-- จอกลุ่ม ~430px -->
+    <source media="(max-width: 460px)" srcset="size_768x1024.jpg">
+    <!-- จอกลุ่ม ~430px -->   
+   <source media="(max-width: 460px)" srcset="size_853x1280.jpg">
+    <!-- จอกลุ่ม ~430px -->
+    <source media="(max-width: 460px)" srcset="size_820x1180.jpg">
+    <!-- จอกลุ่ม ~430px -->
+    <source media="(max-width: 460px)" srcset="size_912X1368.jpg">
 
-        <div id="ui-container">
-            <div class="header">
-                <div class="header-left">
-                    <button id="krathong-counter" class="btn">ลอยแล้ว 0 ใบ</button>
-                </div>
-                <div class="header-right">
-                    <button id="btn-launch-header" class="btn">ปล่อยกระทง</button>
-                    <button id="btn-reset" class="btn">เริ่มใหม่</button>
-                    <button id="btn-music" class="btn">เพลง: เปิด</button>
-                    <button id="btn-export" class="btn">ส่งออก CSV</button>
-                </div>
-            </div>
 
-            <div id="wish-input-container">
-                <h2>อธิษฐาน</h2>
-                <textarea id="wish-input" rows="4" placeholder="พิมพ์คำอธิษฐานของคุณที่นี่..."></textarea>
-                <button id="launch" class="btn">ปล่อยกระทง</button>
-            </div>
+     <img id="bgLayer" src="bg5.png" alt="background" style="width:auto;">
+    </picture>
+</div>
+<canvas id="scene"></canvas>
+<div id="toast">ปล่อยแล้ว 🎋</div>
+<div id="mobileBar">
+  <button id="tapLaunch" class="btn good" style="display: none;">ปล่อยกระทง</button>
+  <button id="tapMusic" class="btn" style="display: none;">▶/⏸ เพลง</button>
+</div>
+<audio id="bgm" loop preload="auto" src="song.mp3" playsinline></audio>
 
-            <div id="toast"></div>
+<div id="splash">
+  <div class="card">
+    <h1 style="margin:4px 0 0 0">แตะหน้าจอเพื่อเริ่มลอยกระทง</h1>
+    <p class="muted" style="margin:10px 10px 10px 10px"><span id="loadInfo">กำลังเตรียมฉาก…</span> • หากเพลงไม่ดัง ให้กดปุ่ม ▶ เล่นเพลง</p>
+    <button id="startBtn" class="btn good">เริ่มลอยกระทง</button>
+  </div>
+</div>
 
-            <!-- Mobile Bar - Hidden via CSS -->
-            <div id="mobileBar">
-                <button id="btn-launch-mobile" class="btn">ปล่อยกระทง</button>
-                <button id="btn-reset-mobile" class="btn">เริ่มใหม่</button>
-                <button id="btn-music-mobile" class="btn">เพลง: เปิด</button>
-                <button id="btn-export-mobile" class="btn">ส่งออก CSV</button>
-            </div>
-        </div>
-    </div>
+<section style="position:fixed; left:10px; bottom:10px; right:10px; z-index:9; color:#bbccdd; pointer-events:none;">
+  <ul id="wishList"></ul>
+</section>
 
-    <audio id="bg-music" loop></audio>
+<script>
+// Files
+const KRATHONG_SRCS=["kt1.png","kt2.png","kt3.png","kt4.png","kt5.png"];
+const TUK_SRC="tuktuk.png";
+const LOGO_SRC="logo.png";
 
-    <!-- The critical fix: New cache-busting version to force reload -->
-    <script src="main.js?v=20231104_02"></script>
+// Params
+const WATER_PCT=80, DIP_PX=60, WAVES=10, WAVE_AMP=6, WAVE_GAP=16;
+const ROAD_FROM_BOTTOM=185;
+const TUK={w:140,h:90,speed:40};
+const KRATHONG_SIZE={w:80,h:80}; // FINAL FIX: Defining Krathong size
+
+const bgEl=document.getElementById('bgLayer');
+const canvas=document.getElementById('scene'), ctx=canvas.getContext('2d');
+function size(){ const h=document.querySelector('header').offsetHeight; canvas.width=innerWidth; canvas.height=innerHeight-h; }
+addEventListener('resize', size); size();
+// const waterY=()=> canvas.height*(WATER_PCT/100); // Removed as it's now calculated dynamically
+
+// Loaders
+function loadImage(src){ return new Promise((res)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); }
+let tukImg=null, logoImg=null, krathongs=[], readyCount=0;
+const totalToLoad=1+1+KRATHONG_SRCS.length;
+function markReady(){ readyCount++; document.getElementById('loadInfo').textContent = `โหลดแล้ว ${readyCount}/${totalToLoad}`; }
+(async()=>{
+  tukImg = await loadImage(TUK_SRC); markReady();
+  logoImg = await loadImage(LOGO_SRC); markReady();
+  for(const s of KRATHONG_SRCS){ krathongs.push(await loadImage(s)); markReady(); }
+})();
+
+// Audio
+const bgm=document.getElementById('bgm');
+function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
+document.getElementById('playBtn').onclick = safePlay;
+document.getElementById('tapMusic').onclick = ()=>{ if(bgm.paused) safePlay(); else bgm.pause(); };
+document.getElementById('stopBtn').onclick = ()=>{ try{ bgm.pause(); }catch{} };
+
+const splash=document.getElementById('splash');
+function hideSplash(){ if(!splash) return; splash.classList.add('hide'); setTimeout(()=>splash.remove?.(),350); }
+document.getElementById('startBtn').onclick = ()=>{ hideSplash(); safePlay(); };
+setTimeout(hideSplash, 1800);
+
+// Wish list / counters / logging for report
+const LS_COUNT="loy.count", LS_WISHES="loy.wishes.queue", LS_SEQ="loy.seq", LS_LOG="loy.wishes.log";
+let total=+(localStorage.getItem(LS_COUNT)||0), seq=+(localStorage.getItem(LS_SEQ)||0);
+document.getElementById('statCount').textContent=total;
+function bump(){ total++; localStorage.setItem(LS_COUNT,total); document.getElementById('statCount').textContent=total; }
+function pushWish(text){ 
+  let arr=[]; try{ arr=JSON.parse(localStorage.getItem(LS_WISHES)||"[]"); }catch{}; 
+  seq++; localStorage.setItem(LS_SEQ, seq); 
+  const item={n:seq,w:text||"",t:Date.now()};
+  arr.push(item); localStorage.setItem(LS_WISHES, JSON.stringify(arr)); 
+
+// log สำหรับ report
+  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{};
+  log.push(item); localStorage.setItem(LS_LOG, JSON.stringify(log));
+  renderWish(); 
+}
+function renderWish(){ const ul=document.getElementById('wishList'); let arr=[]; try{ arr=JSON.parse(localStorage.getItem(LS_WISHES)||"[]"); }catch{}; const view=arr.slice(-6); ul.innerHTML=view.map(x=>`<li><span class="num">คนที่ ${x.n}</span>🕯️ ${escapeHtml(x.w)}</li>`).join(""); }
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m]));}
+renderWish();
+
+// Export CSV
+document.getElementById('exportBtn').onclick=()=>{
+  let log=[]; try{ log=JSON.parse(localStorage.getItem(LS_LOG)||"[]"); }catch{}
+  const rows=[["seq","timestamp","ISO","wish"]];
+  for(const x of log){ const iso=new Date(x.t||Date.now()).toISOString(); rows.push([x.n, x.t, iso, (x.w||"").replace(/"/g,'""')]); }
+  const csv=rows.map(r=>r.map(v=>`"${String(v)}"`).join(",")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="loykrathong_report.csv"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+
+// Reset
+document.getElementById('resetBtn').onclick=()=>{
+  if(confirm("ยืนยันเริ่มนับใหม่และลบคำอธิษฐานทั้งหมด?")){
+    localStorage.removeItem(LS_COUNT);
+    localStorage.removeItem(LS_WISHES);
+    localStorage.removeItem(LS_SEQ);
+    localStorage.removeItem(LS_LOG);
+    location.reload();
+  }
+};
+
+// Main loop
+let lastTime=0, tukX=0, fireworkTimer=0;
+const KRATHONG_SPEED=1.5, FIREWORK_INTERVAL=5000;
+const krathongList=[];
+
+function loop(time){
+  const delta=time-lastTime; lastTime=time;
+  if(delta>100) return requestAnimationFrame(loop); // Skip large delta (e.g., tab switch)
+
+  // Clear canvas
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Calculate positions based on background image containment
+  const bgWidth = 1920;
+  const bgHeight = 1080;
+  const bgAspectRatio = bgWidth / bgHeight;
+  const headerHeight = document.querySelector('header').offsetHeight;
+  
+  let effectiveWidth, effectiveHeight, xOffset, yOffset;
+
+  if (canvas.width / canvas.height > bgAspectRatio) {
+      // Screen is wider than image aspect ratio (black bars on left/right)
+      effectiveHeight = canvas.height;
+      effectiveWidth = canvas.height * bgAspectRatio;
+      xOffset = (canvas.width - effectiveWidth) / 2;
+      yOffset = 0;
+  } else {
+      // Screen is taller than image aspect ratio (black bars on top/bottom)
+      effectiveWidth = canvas.width;
+      effectiveHeight = canvas.width / bgAspectRatio;
+      xOffset = 0;
+      yOffset = (canvas.height - effectiveHeight) / 2;
+  }
+  
+  // FINAL FIX: Precise calculation for 'contain' background-size responsiveness, accounting for header
+  const bgWidth = 1920;
+  const bgHeight = 1080;
+  const bgAspectRatio = bgWidth / bgHeight;
+  const headerHeight = document.querySelector('header').offsetHeight;
+  
+  let effectiveWidth, effectiveHeight, xOffset, yOffset;
+
+  // Calculate the effective size of the background image within the full viewport
+  const viewportWidth = innerWidth;
+  const viewportHeight = innerHeight;
+
+  if (viewportWidth / viewportHeight > bgAspectRatio) {
+      // Screen is wider than image aspect ratio (black bars on left/right)
+      effectiveHeight = viewportHeight;
+      effectiveWidth = viewportHeight * bgAspectRatio;
+      xOffset = (viewportWidth - effectiveWidth) / 2;
+      yOffset = 0;
+  } else {
+      // Screen is taller than image aspect ratio (black bars on top/bottom)
+      effectiveWidth = viewportWidth;
+      effectiveHeight = viewportWidth / bgAspectRatio;
+      xOffset = 0;
+      yOffset = (viewportHeight - effectiveHeight) / 2;
+  }
+  
+  // The Y-offset relative to the canvas top (canvas starts below the header)
+  const canvasYOffset = yOffset - headerHeight;
+
+  // The red line is at 82% of the image height from the top (18% from the bottom)
+  const roadPositionRatio = 0.82; 
+  const roadYInImage = bgHeight * roadPositionRatio;
+  
+  // Convert image coordinate to screen coordinate (relative to canvas)
+  const scaleFactor = effectiveHeight / bgHeight;
+  const roadYScreen = canvasYOffset + (roadYInImage * scaleFactor);
+
+  // TukTuk
+  if(tukImg){
+    tukX = (tukX + TUK.speed * delta / 1000) % (canvas.width + TUK.w);
+    if(tukX > canvas.width) tukX = -TUK.w;
+    
+    // FINAL FIX: Use the calculated roadYScreen for tuktuk position
+    const tukY = roadYScreen - TUK.h + 10; // +10 for fine-tuning the alignment
+    ctx.drawImage(tukImg, tukX - TUK.w, tukY, TUK.w, TUK.h);
+  }
+
+  // Water level (90% of the image height from the top)
+  const waterPositionRatio = 0.90;
+  const waterYInImage = bgHeight * waterPositionRatio;
+  const waterYScreen = canvasYOffset + (waterYInImage * scaleFactor);
+  
+  // Update global water level for krathongs
+  waterY = waterYScreen;
+
+  // Krathongs
+  for(const k of krathongList){
+    k.x = (k.x + KRATHONG_SPEED * delta / 1000) % (canvas.width + k.w);
+    if(k.x > canvas.width) k.x = -k.w;
+    
+    // FINAL FIX: Use the calculated waterYScreen for krathong position
+    k.y = waterYScreen + Math.sin(k.x/WAVE_GAP + time/200) * WAVE_AMP;
+    ctx.drawImage(k.img, k.x, k.y - k.h/2, k.w, k.h);
+    
+    // Draw wish text
+    if(k.w){
+      ctx.fillStyle='#fff'; ctx.font='16px "TH Sarabun New", sans-serif'; ctx.textAlign='center';
+      // FINAL FIX: Add a faint border/shadow for better visibility
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)'; // Faint black border
+      ctx.lineWidth = 2;
+      ctx.strokeText(k.w, k.x+k.w/2, k.y-k.h/2-10);
+      
+      ctx.fillText(k.w, k.x+k.w/2, k.y-k.h/2-10);
+    }
+  }
+
+  // Waves
+  ctx.strokeStyle='#000'; ctx.lineWidth=2;
+  for(let i=0; i<WAVES; i++){
+    ctx.beginPath();
+    ctx.moveTo(0, waterYScreen + i*WAVE_GAP);
+    for(let x=0; x<canvas.width; x++){
+      const y=waterYScreen + i*WAVE_GAP + Math.sin(x/WAVE_GAP + time/200) * WAVE_AMP;
+      ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+
+  // Fireworks
+  fireworkTimer += delta;
+  if(fireworkTimer > FIREWORK_INTERVAL){
+    fireworkTimer = 0;
+    // Launch 3 fixed fireworks (assuming logo.png is the no-smoking logo)
+    const fixedPositions = [
+      { x: 0.2 * bgWidth, y: 0.2 * bgHeight }, // Left
+      { x: 0.5 * bgWidth, y: 0.1 * bgHeight }, // Center
+      { x: 0.8 * bgWidth, y: 0.2 * bgHeight }  // Right
+    ];
+    
+    for(const pos of fixedPositions){
+      // Convert fixed image coordinates to canvas coordinates
+      const fireworkX = xOffset + (pos.x * scaleFactor);
+      const fireworkY = canvasYOffset + (pos.y * scaleFactor);
+      // Logic to launch firework at fireworkX, fireworkY
+      // This part is missing in the provided code, so we'll skip it for now.
+    }
+  }
+
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// Krathong logic
+document.getElementById('launch').onclick=()=>{
+  const wishInput=document.getElementById('wish');
+  const wishText=wishInput.value.trim();
+  if(!wishText) return alert("กรุณาพิมพ์คำอธิษฐานก่อนปล่อยกระทง");
+  
+  bump(); pushWish(wishText); wishInput.value='';
+  
+  // Find an available krathong slot
+  let k=krathongList.find(k=>!k.w);
+  if(!k){
+    // If all are launched, replace the oldest one (first in the list)
+    k=krathongList.shift();
+    krathongList.push(k);
+  }
+  
+    k.w=wishText;
+  k.x=-k.w; // Start off-screen
+  k.y = waterY; // Reset Y position to current water level
+};
+
+// Initial krathong setup
+for(let i=0; i<KRATHONG_SRCS.length; i++){
+  krathongList.push({
+    img: krathongs[i],
+    w: KRATHONG_SIZE.w, h: KRATHONG_SIZE.h, // FINAL FIX: Using defined Krathong size
+    x: -KRATHONG_SIZE.w - i*200, // Staggered start
+    y: 0, // Will be set in loop
+    w: '' // Wish text
+  });
+}
+
+</script>
 </body>
 </html>
