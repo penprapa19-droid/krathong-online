@@ -7,7 +7,7 @@
 
 /* ===== Configuration & Constants ===== */
 const VQS = "?v=12.4"; // Version Query String for cache busting
-const WATER_FACTOR = 0.90;   // Water surface height as a fraction of canvas height (Adjusted from 0.80 to 0.90)
+const WATER_FACTOR = 0.75;   // Adjusted to 0.75 to raise the water level further, preventing krathongs from sinking too much
 const ROAD_DY      = 0;      // Road position relative to water surface (0 means road is at water level)
 const LANES        = 5;      // Number of krathong lanes
 const LANE_STEP    = 16;     // Vertical distance between lanes
@@ -112,7 +112,7 @@ class Krathong{
     this.img=img; this.text=text||"";
     this.size=KR_SIZE;
     this.lane=nextKrathongIndex % LANES; // Assign a lane
-    this.x=-120; this.vx=rnd(22,28);
+    this.x=-120; this.vx=rnd(18,24); // Slightly slower speed for better spacing
     this.phase=rnd(0,Math.PI*2); this.amp=2.2; this.freq=.9+rnd(0,.5); this.t=0;
     this.y=this.computeY(0);
   }
@@ -122,7 +122,7 @@ class Krathong{
   }
   update(dt){
     this.x+=this.vx*dt;
-    if(this.x>cvs.width+160) this.x=-160 - rnd(0,120); // Loop with random offset
+    if(this.x>cvs.width+160) this.x=-160 - rnd(0,250); // Increased random offset for better spacing
     this.t+=dt;
     this.y=this.computeY(this.t);
   }
@@ -192,7 +192,7 @@ document.getElementById('launch').onclick=()=>{
 };
 
 // Mobile tap launch (if element exists)
-document.getElementById('tapLaunch').onclick=()=>{
+document.getElementById('tapLaunchMobile').onclick=()=>{
   launch("");
   showToast();
   haptic();
@@ -207,7 +207,7 @@ cvs.addEventListener('touchstart', ()=>{ launch(""); showToast(); haptic(); }, {
 function safePlay(){ try{ const p=bgm.play(); if(p&&p.catch) p.catch(()=>{});}catch{} }
 
 // Play/Pause button
-document.getElementById('tapMusic').onclick = ()=>{
+document.getElementById('tapMusicMobile').onclick = ()=>{
   if(bgm.paused) safePlay(); else bgm.pause();
 };
 
@@ -264,7 +264,7 @@ setInterval(spawnTriple,10000); // Recurring bursts
 // Since we set object-fit: cover and object-position: center bottom,
 // the bottom of the image aligns with the bottom of the stage.
 // We will use a fixed offset from the bottom of the canvas for the road.
-const ROAD_OFFSET_FROM_BOTTOM = 100; // Based on original value (Adjusted from 185 to 100)
+const ROAD_OFFSET_FROM_BOTTOM = 450; // Adjusted to 450 to ensure tuk-tuk is definitely on the red line (based on user feedback)
 
 function roadYFromBackground(){
   // Calculate the road Y position relative to the canvas bottom
