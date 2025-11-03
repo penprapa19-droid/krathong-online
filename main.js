@@ -71,11 +71,13 @@ function resizeCanvas() {
 
     // Recalculate tuktuk position based on new height
     if (tuktuk.image) {
+        // Tuktuk should be positioned on the road, which is above the water line
         tuktuk.y = height - ROAD_OFFSET_FROM_BOTTOM - tuktuk.height + 2; // +2px to lift it slightly
     }
 
     // Recalculate krathong positions
     krathongs.forEach(k => {
+        // Krathongs should be positioned at the water level
         k.y = height - (height * WATER_FACTOR) - k.height / 2;
     });
 }
@@ -177,9 +179,23 @@ function gameLoop(timestamp) {
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Draw water line (for visual reference)
+    // --- Draw Water Line and Water Area ---
+    const waterLevel = height - (height * WATER_FACTOR);
+    
+    // Draw water area (optional, for debugging/visual)
+    // We will draw a semi-transparent blue rectangle to represent the water
     ctx.fillStyle = 'rgba(0, 0, 100, 0.3)';
-    ctx.fillRect(0, height - (height * WATER_FACTOR), width, height * WATER_FACTOR);
+    ctx.fillRect(0, waterLevel, width, height * WATER_FACTOR);
+
+    // Draw water line (a simple blue line)
+    ctx.strokeStyle = 'rgba(0, 150, 255, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, waterLevel);
+    ctx.lineTo(width, waterLevel);
+    ctx.stroke();
+    // --------------------------------------
+
 
     // Update and Draw Krathongs
     krathongs.forEach(k => {
@@ -237,8 +253,18 @@ function loadAssets() {
         const img = new Image();
         img.onload = assetLoaded;
         img.src = src;
-        krathongs.push(new Krathong(index, img, ''));
+        // Only initialize the krathong object with the image, don't push to krathongs array yet
+        // We will only use the loaded images for new krathongs
     });
+    
+    // Pre-initialize krathongs array with placeholder images for the first 5 krathongs
+    for (let i = 0; i < KRATHONG_COUNT; i++) {
+        const img = new Image();
+        img.onload = assetLoaded;
+        img.src = assets.krathongs[i];
+        krathongs.push(new Krathong(i, img, ''));
+    }
+
 
     // Load Music
     const musicEl = document.getElementById('bg-music');
@@ -273,8 +299,10 @@ function launch(wish) {
         wishInputContainer.style.display = 'none';
     }
 
-    // Create a new krathong with the wish
+    // Find the next krathong image to use
     const krathongImage = krathongs[krathongCounter % KRATHONG_COUNT].image;
+    
+    // Create a new krathong with the wish
     const newKrathong = new Krathong(krathongs.length, krathongImage, wish);
     newKrathong.x = width + 50; // Start just off-screen
     krathongs.push(newKrathong);
@@ -296,7 +324,14 @@ function launch(wish) {
 }
 
 function resetGame() {
-    krathongs = [];
+    // Reset krathongs to only the initial 5 placeholders
+    krathongs = krathongs.slice(0, KRATHONG_COUNT);
+    // Reset positions of initial krathongs to off-screen
+    krathongs.forEach((k, index) => {
+        k.x = width + (index * KRATHONG_SPACING);
+        k.y = height - (height * WATER_FACTOR) - k.height / 2;
+    });
+    
     wishes = [];
     krathongCounter = 0;
     tuktuk.x = -tuktuk.width;
