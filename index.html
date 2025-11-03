@@ -21,7 +21,7 @@
   #splash{position:fixed; inset:0; background:rgba(3,7,14,.85); display:grid; place-items:center; z-index:20}
   .card{background:#0e1726;border:2px solid #1a2a45;border-radius:12px;padding:22px 24px;box-shadow:0 10px 40px rgba(0,0,0,.4);width:min(92vw,560px);text-align:center}
   #splash.hide{opacity:0;pointer-events:none;transition:.35s}
-  input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX}
+  input[type="text"]{background:#0f1c33; border:2px solid #284a7e; border-radius:12px; color:#e9f0ff; padding:10px 10px; min-width:270px; font-size:16PX; flex-grow:1;}
   #wishList{max-width:680px; font-size:1rem; list-style:none; padding-left:20px}
   #wishList .num{display:inline-block; min-width:64px; margin-right:.35rem; color:#9bd3ff}
   #mobileBar{position:fixed;left:0;right:0;bottom:0;display:none;gap:.6rem;justify-content:center;padding:.6rem;z-index:12;
@@ -30,16 +30,19 @@
   #toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%); background:#0e1726; border:2px solid #1a2a45; border-radius:12px ;padding:.45rem .9rem;z-index:13;opacity:0;transition:opacity .25s}
   #toast.show{opacity:.96}
 
+  /* CSS เพื่อซ่อนปุ่มใน Header บนมือถือ */
   @media (max-width:640px){
     header{padding:10px 10px;}
-    #scene{ top:70px; height:calc(100% - 70px); } /* Adjusted top for mobile header */
+    #scene{ top:100px; height:calc(100% - 100px); } /* Adjusted top for mobile header */
     h1{font-size:20px; margin:0px 0px}
     .row{gap:8px;}
     .pill{padding:8px 8px;}
     .btn{padding:8px 8px; font-size:14PX}
-    input[type="text"]{min-width:150px; font-size:14PX}
+    input[type="text"]{min-width:100%; font-size:14PX; margin-top:8px; flex-grow:1;}
     #mobileBar{display:flex}
     .card{width:min(90vw,300px);}
+    /* ซ่อน mobileBar บนมือถือ */
+    #mobileBar { display: none !important; }
   }
 </style>
 <link rel="icon" href="images/logo.png">
@@ -51,13 +54,13 @@
   </div>
   <div class="row" style="margin-top:10px">
     <span class="pill">ลอยแล้ว <strong id="statCount">0</strong> ใบ</span>
-    <button id="tapMusic" class="btn">▶/⏸ เพลง</button>
+    <button id="headerMusicBtn" class="btn">▶/⏸ เพลง</button>
     <button id="resetBtn" class="btn bad">🧹 เริ่มนับใหม่</button>
     <button id="exportBtn" class="btn bad">⬇️ รายงาน CSV</button>
   </div>
   <div class="row" style="margin-top:10px">
-    <input id="wish" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ…">
-    <button id="launch" class="btn good">ปล่อย</button>
+    <input id="wish" type="text" placeholder="พิมพ์คำอธิษฐานของคุณ…" style="flex-grow:1;">
+    <button id="headerLaunchBtn" class="btn good">ปล่อย</button>
   </div>
 </header>
 <div id="stage">
@@ -69,8 +72,8 @@
 <canvas id="scene"></canvas>
 <div id="toast">ปล่อยแล้ว 🎋</div>
 <div id="mobileBar">
-  <button id="tapLaunch" class="btn good">ปล่อยกระทง</button>
-  <button id="tapMusic" class="btn">▶/⏸ เพลง</button>
+  <button id="tapLaunchMobile" class="btn good">ปล่อยกระทง</button>
+  <button id="tapMusicMobile" class="btn">▶/⏸ เพลง</button>
 </div>
 <audio id="bgm" loop preload="auto" src="audio/song.mp3" playsinline></audio>
 <div id="splash">
