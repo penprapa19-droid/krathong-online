@@ -13,7 +13,7 @@ const MAX_BOATS = 24;
 const TUK_W = 140;
 const TUK_H = 90;
 const TUK_SPEED = 35;
-const ROAD_OFFSET_FROM_BOTTOM = 470;
+const ROAD_OFFSET_FROM_BOTTOM = 480;
 
 /* ===== Global State & Utility Functions ===== */
 let cvs, ctx, header, wishEl, statEl, toast, bgm, wishListEl, splash;
